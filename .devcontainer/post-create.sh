@@ -11,7 +11,20 @@ sudo chown node:node \
   /home/node/.claude \
   /home/node/.local \
   /home/node/.local/share \
-  /home/node/.local/share/opencode
+  /home/node/.local/share/opencode \
+  /home/node/.config \
+  /home/node/.config/gh
+
+# GitHub access. The origin remote is SSH, but host SSH keys are not reliably
+# available in here (agent forwarding depends on the client), so rewrite
+# github.com SSH URLs to HTTPS and let gh supply the token. This is container-
+# global git config only; the repo's .git/config and the host are untouched.
+# Authenticate once with `gh auth login` (token persists in the gh-config
+# volume) or via GH_TOKEN from the host.
+git config --global credential.https://github.com.helper ''
+git config --global --add credential.https://github.com.helper '!gh auth git-credential'
+git config --global url."https://github.com/".insteadOf "git@github.com:"
+git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
 
 # npm's global prefix here (/usr/local/share/npm-global) is node-owned and
 # already on PATH, so this needs no sudo. Pinned so a rebuild does not silently

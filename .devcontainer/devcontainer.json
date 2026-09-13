@@ -2,13 +2,18 @@
   "name": "nerd-clocks",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22-bookworm",
   "features": {
-    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
+    // gh doubles as git's credential helper for github.com (wired up in
+    // post-create.sh), so one `gh auth login` covers both git and the API.
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "mounts": [
     "source=claude-code-data,target=/home/node/.claude,type=volume",
     // opencode keeps sessions and provider credentials here; without a volume
     // they are lost on every rebuild.
-    "source=opencode-data,target=/home/node/.local/share/opencode,type=volume"
+    "source=opencode-data,target=/home/node/.local/share/opencode,type=volume",
+    // gh stores its token here; the volume keeps you logged in across rebuilds.
+    "source=gh-config,target=/home/node/.config/gh,type=volume"
   ],
   // Docker Desktop provides host.docker.internal already; the explicit
   // host-gateway mapping keeps this working under Colima, Podman and plain
@@ -26,6 +31,14 @@
     // Hearth does no auth, but most clients refuse to send a request without
     // some key present.
     "OPENAI_API_KEY": "hearth-local"
+  },
+  "remoteEnv": {
+    // Optional: export GH_TOKEN on the host (e.g. `export GH_TOKEN=$(gh auth
+    // token)`) before opening the container to skip `gh auth login` entirely.
+    // Empty when unset, which gh treats as absent. Set here rather than in
+    // containerEnv, which the CLI bakes into the image as ENV -- that would
+    // leave the token in an image layer.
+    "GH_TOKEN": "${localEnv:GH_TOKEN}"
   },
   "postCreateCommand": "./.devcontainer/post-create.sh",
   "remoteUser": "node"
