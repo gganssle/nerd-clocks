@@ -31,6 +31,10 @@ git config --global --add url."https://github.com/".insteadOf "ssh://git@github.
 # pick up a new major -- bump deliberately.
 npm install -g opencode-ai@1.18.30
 
+# beads issue tracker. Keep the pin in step with the host's `bd version`: both
+# sides open the same .beads/embeddeddolt database through the bind mount.
+npm install -g @beads/bd@1.2.2
+
 # Hearth provider config lives in the repo so it is reviewable, but it is only
 # valid inside the container (host.docker.internal does not resolve on the Mac
 # host), which is why it is copied in rather than left at the project root.
