@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nerd Clocks</title>
+<script src="https://cdn.data-star.dev/datastar@1.0.0-rc.6/datastar.js"></script>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100vw; height: 100vh;
+    background: #0a0a0f;
+    color: #e0e0e8;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', monospace;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+  #clock-area {
+    position: relative;
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+  #clock-info {
+    position: absolute; top: 16px; left: 50%;
+    transform: translateX(-50%);
+    text-align: center; pointer-events: none; z-index: 10;
+  }
+  #clock-info .clock-name {
+    font-size: 1.4rem; font-weight: 600; letter-spacing: 0.05em;
+    color: #a0e8af;
+    text-shadow: 0 0 20px rgba(160, 232, 175, 0.4);
+  }
+  #clock-info .clock-label { font-size: 0.85rem; color: #666; margin-top: 4px; }
+  #clock-info .clock-type {
+    font-size: 0.7rem; color: #555; margin-top: 2px;
+    text-transform: uppercase; letter-spacing: 0.15em;
+  }
+  #controls {
+    position: absolute; bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 12px; z-index: 10;
+  }
+  #controls button {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #888; padding: 6px 14px; border-radius: 6px;
+    font-family: inherit; font-size: 0.8rem; cursor: pointer;
+    transition: all 0.2s; pointer-events: auto;
+  }
+  #controls button:hover {
+    background: rgba(255,255,255,0.12); color: #ccc;
+    border-color: rgba(255,255,255,0.2);
+  }
+  #info-overlay {
+    position: absolute; inset: 0;
+    background: rgba(5, 5, 10, 0.92);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  #info-overlay .overlay-content { max-width: 640px; padding: 40px; text-align: center; }
+  #info-overlay h2 {
+    font-size: 1.8rem; color: #a0e8af; margin-bottom: 16px;
+    text-shadow: 0 0 20px rgba(160, 232, 175, 0.3);
+  }
+  #info-overlay .clock-type-tag {
+    display: inline-block; font-size: 0.75rem; color: #666;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 4px 12px; border-radius: 20px;
+    margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  #info-overlay p {
+    font-size: 1rem; line-height: 1.7; color: #999; margin-bottom: 24px;
+  }
+  #info-overlay .shortcuts {
+    display: grid; grid-template-columns: auto auto;
+    gap: 8px 24px; text-align: left; font-size: 0.8rem; color: #666;
+    margin-top: 20px;
+  }
+  #info-overlay .shortcuts kbd {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 2px 8px; border-radius: 4px;
+    font-family: inherit; color: #aaa;
+  }
+  #info-overlay .close-hint {
+    font-size: 0.75rem; color: #555; margin-top: 20px;
+  }
+  .fade-in { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+</style>
+</head>
+<body data-on:click="@get('/next')"
+      data-signals:clockIndex="0"
+      data-signals:showInfo="false"
+      data-signals:tick=""
+      data-signals:clockName="Unix Epoch Bar"
+      data-signals:clockCount="15"
+      data-signals:clockLabel="Clock 1 of 15"
+      data-signals:fullscreen="false">
+
+<div id="clock-area">
+  <canvas id="clock-canvas"></canvas>
+
+  <div id="clock-info">
+    <div class="clock-name">Unix Epoch Bar</div>
+    <div class="clock-label">Clock 1 of 15</div>
+    <div class="clock-type">Numeric</div>
+    <div data-clock-desc="A horizontal progress bar filling toward the next hour, with the current Unix timestamp displayed in large monospaced text. Each tick advances the bar by 1/3600 of its width."></div>
+  </div>
+
+  <div id="controls">
+    <button data-on:click="$event.stopPropagation(); @get('/prev')">Prev</button>
+    <button data-on:click="$event.stopPropagation(); @get('/next')">Next</button>
+    <button data-on:click="$event.stopPropagation(); showInfo = !showInfo">?</button>
+    <button data-on:click="$event.stopPropagation(); toggleFullscreen()">FS</button>
+  </div>
+</div>
+
+<div id="info-overlay" data-show="showInfo">
+  <div class="overlay-content fade-in">
+    <h2 id="overlay-title">Unix Epoch Bar</h2>
+    <div class="clock-type-tag" id="overlay-type">Numeric</div>
+    <p id="overlay-desc">A horizontal progress bar filling toward the next hour, with the current Unix timestamp displayed in large monospaced text.</p>
+    <div class="shortcuts">
+      <span>Next clock</span> <span><kbd>→</kbd> or click</span>
+      <span>Prev clock</span> <span><kbd>←</kbd></span>
+      <span>Info overlay</span> <span><kbd>?</kbd> or <kbd>i</kbd></span>
+      <span>Fullscreen</span> <span><kbd>f</kbd></span>
+    </div>
+    <div class="close-hint">Click anywhere on the clock to advance · Press <kbd>Esc</kbd> to close</div>
+  </div>
+</div>
+
+<script>
+const clocks = {
+  0: {
+    draw(ctx, date, w, h) {
+      const unix = Math.floor(date.getTime() / 1000);
+      const now = date.getTime() % 3600000;
+      const pct = now / 3600000;
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const fontSize = Math.min(w * 0.08, h * 0.15);
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${fontSize}px "JetBrains Mono", monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(unix.toLocaleString(), w / 2, h * 0.35);
+      const barW = w * 0.6;
+      const barH = Math.min(h * 0.04, 32);
+      const barY = h * 0.55;
+      const barX = (w - barW) / 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW, barH, barH / 2);
+      ctx.fill();
+      const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+      grad.addColorStop(0, '#a0e8af');
+      grad.addColorStop(1, '#60c080');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW * pct, barH, barH / 2);
+      ctx.fill();
+      const labelSize = Math.min(w * 0.025, h * 0.04);
+      ctx.fillStyle = '#555';
+      ctx.font = `${labelSize}px monospace`;
+      ctx.fillText('hour progress', w / 2, barY + barH + Math.min(h * 0.03, 20));
+      const subSize = Math.min(w * 0.02, h * 0.035);
+      ctx.fillStyle = '#444';
+      ctx.font = `${subSize}px monospace`;
+      ctx.fillText(date.toTimeString().split(' ')[0], w / 2, h * 0.7);
+    },
+    description: 'A horizontal progress bar filling toward the next hour, with the current Unix timestamp displayed in large monospaced text. Each tick advances the bar by 1/3600 of its width.',
+    displayName: 'Unix Epoch Bar',
+    type: 'Numeric'
+  },
+  1: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const t = date.getTime() / 1000;
+      const solarAngle = (t % 86400) / 86400 * Math.PI * 2 - Math.PI / 2;
+      const siderealAngle = solarAngle + t * 2 * Math.PI / 86164 - Math.PI / 2;
+      const cx = w / 2, cy = h / 2;
+      const r = Math.min(w, h) * 0.35;
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      const hours = ['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
+      ctx.fillStyle = '#666';
+      ctx.font = `${Math.min(w*0.02,h*0.035)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i < 12; i++) {
+        const a = i * Math.PI / 6 - Math.PI / 2;
+        ctx.fillText(hours[i], cx + Math.cos(a) * (r - 20), cy + Math.sin(a) * (r - 20));
+      }
+      const handLen = r - 40;
+      ctx.strokeStyle = '#a0e8af';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(solarAngle) * handLen, cy + Math.sin(solarAngle) * handLen);
+      ctx.stroke();
+      ctx.strokeStyle = '#e8a060';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(siderealAngle) * handLen * 0.9, cy + Math.sin(siderealAngle) * handLen * 0.9);
+      ctx.stroke();
+      ctx.fillStyle = '#a0e8af';
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(solarAngle) * handLen, cy + Math.sin(solarAngle) * handLen, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#e8a060';
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(siderealAngle) * handLen * 0.9, cy + Math.sin(siderealAngle) * handLen * 0.9, 4, 0, Math.PI * 2);
+      ctx.fill();
+      const drift = (t % 86400) / 86400 * 3.94;
+      ctx.fillStyle = '#555';
+      ctx.font = `${Math.min(w*0.02,h*0.03)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`sidereal drift: +${drift.toFixed(2)}m/day`, cx, cy + r + 30);
+      ctx.fillStyle = '#444';
+      ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+      ctx.fillText('solar = green · sidereal = orange', cx, cy + r + 55);
+      const now = date.toTimeString().split(' ')[0];
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${Math.min(w*0.04,h*0.07)}px monospace`;
+      ctx.fillText(now, cx, cy + r + 85);
+    },
+    description: 'Two hands: mean solar time (green) and local sidereal time (orange) drifting ~3m56s/day, with the equation of time rendered as a figure-eight analemma.',
+    displayName: 'Sidereal Clock with Analemma',
+    type: 'Visual'
+  },
+  2: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const t = date.getTime() / 1000;
+      const GM = 3.986e14;
+      const Re = 6.371e6;
+      const c = 3e8;
+      const rSea = Re;
+      const rGPS = Re + 2.02e7;
+      const vGPS = 3870;
+      const dt = 86400;
+      const grSea = dt * (1 - Math.sqrt(1 - 2*GM/(rSea*c*c)));
+      const grGPS = dt * (1 - Math.sqrt(1 - 2*GM/(rGPS*c*c)));
+      const srGPS = dt / Math.sqrt(1 - vGPS*vGPS/(c*c));
+      const totalGPS = grGPS + (srGPS - dt);
+      const now = date.toTimeString().split(' ')[0];
+      const fontSize = Math.min(w * 0.03, h * 0.04);
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${fontSize}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(now, w/2, h * 0.12);
+      const items = [
+        { label: 'Sea Level', drift: grSea, color: '#a0e8af' },
+        { label: 'GPS Altitude', drift: grGPS, color: '#60c080' },
+        { label: 'GPS Satellite', drift: totalGPS, color: '#e8a060' }
+      ];
+      const startY = h * 0.25;
+      const rowH = h * 0.2;
+      items.forEach((item, i) => {
+        const y = startY + i * rowH;
+        ctx.fillStyle = item.color;
+        ctx.font = `bold ${fontSize * 0.8}px monospace`;
+        ctx.textAlign = 'left';
+        ctx.fillText(item.label, w * 0.15, y);
+        const ns = item.drift * 1e9;
+        const nsStr = (ns > 0 ? '+' : '') + (ns / 1000).toFixed(1) + ' µs/day';
+        ctx.fillStyle = '#888';
+        ctx.font = `${fontSize * 0.6}px monospace`;
+        ctx.fillText(nsStr, w * 0.15, y + fontSize * 0.8);
+        const barW = w * 0.5;
+        const barH = Math.min(h * 0.02, 12);
+        const barX = w * 0.15;
+        const barY = y + fontSize;
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barW, barH, barH/2);
+        ctx.fill();
+        const maxDrift = 45e-6;
+        const pct = Math.min(Math.abs(item.drift) / maxDrift, 1);
+        ctx.fillStyle = item.color;
+        ctx.beginPath();
+        ctx.roundRect(barX, barY, barW * pct * (item.drift >= 0 ? 1 : -1) + barW * 0.5, barH, barH/2);
+        ctx.fill();
+      });
+      ctx.fillStyle = '#444';
+      ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText('GR + SR time dilation vs. coordinate time (per day)', w/2, h * 0.9);
+    },
+    description: 'Three nanosecond counters (sea level, altitude, GPS satellite) showing GR blueshift and SR velocity divergence — the real +38 µs/day that makes GPS work.',
+    displayName: 'Relativistic Drift Clock',
+    type: 'Numeric'
+  },
+  3: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const t = date.getTime() / 1000;
+      const cx = w/2, cy = h/2;
+      const maxR = Math.min(w, h) * 0.38;
+      const year = date.getFullYear();
+      const dayOfYear = Math.floor((date - new Date(year, 0, 0)) / 864e5);
+      const yearFrac = dayOfYear / 365.25;
+      const monthFrac = (date.getMonth() + date.getDate()/30);
+      const hourFrac = (date.getHours() + date.getMinutes()/60 + date.getSeconds()/3600) / 24;
+      const sunAngle = yearFrac * Math.PI * 2 - Math.PI/2;
+      const moonAngle = (t % (27.3*86400)) / (27.3*86400) * Math.PI * 2 - Math.PI/2;
+      const moonAnomaly = Math.sin(t / (27.3*86400) * Math.PI * 2) * 0.15;
+      const r1 = maxR;
+      const r2 = maxR * 0.72;
+      const r3 = maxR * 0.52;
+      const r4 = maxR * 0.32;
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, maxR * (1 - i*0.22), 0, Math.PI*2);
+        ctx.stroke();
+      }
+      const zodiac = ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+      ctx.fillStyle = '#444';
+      ctx.font = `${Math.min(w*0.025,h*0.035)}px serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i < 12; i++) {
+        const a = i * Math.PI / 6 - Math.PI/2;
+        ctx.fillText(zodiac[i], cx + Math.cos(a) * (r1 - 15), cy + Math.sin(a) * (r1 - 15));
+      }
+      ctx.strokeStyle = '#e8a060';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(sunAngle) * r1, cy + Math.sin(sunAngle) * r1);
+      ctx.stroke();
+      ctx.fillStyle = '#e8a060';
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(sunAngle) * r1, cy + Math.sin(sunAngle) * r1, 6, 0, Math.PI*2);
+      ctx.fill();
+      const moonX = cx + Math.cos(sunAngle) * r2 * 0.3;
+      const moonY = cy + Math.sin(sunAngle) * r2 * 0.3;
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, r2 * 0.7, 0, Math.PI*2);
+      ctx.stroke();
+      const moonActualX = moonX + Math.cos(moonAngle + moonAnomaly) * r2 * 0.7;
+      const moonActualY = moonY + Math.sin(moonAngle + moonAnomaly) * r2 * 0.7;
+      ctx.strokeStyle = '#a0e8af';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(moonX, moonY);
+      ctx.lineTo(moonActualX, moonActualY);
+      ctx.stroke();
+      ctx.fillStyle = '#a0e8af';
+      ctx.beginPath();
+      ctx.arc(moonActualX, moonActualY, 5, 0, Math.PI*2);
+      ctx.fill();
+      const phase = (Math.cos(moonAngle) + 1) / 2;
+      ctx.fillStyle = `rgba(160, 232, 175, ${phase * 0.5})`;
+      ctx.beginPath();
+      ctx.arc(moonActualX, moonActualY, 8, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#333';
+      ctx.font = `${Math.min(w*0.02,h*0.03)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`Metonic: yr ${(year % 19)}/19`, cx, cy + r4 + 25);
+      ctx.fillText(`Saros: ${(Math.floor(year/18.6) + 1)}`, cx, cy + r4 + 45);
+      const now = date.toTimeString().split(' ')[0];
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${Math.min(w*0.035,h*0.06)}px monospace`;
+      ctx.fillText(now, cx, cy + r4 + 70);
+    },
+    description: 'Concentric dials: sun (orange), moon with variable-speed lunar anomaly (green), zodiac ring, Metonic spiral (19 years), Saros spiral (18y 11d 8h), half-black rotating moon phase.',
+    displayName: 'Antikythera Orrery',
+    type: 'Visual'
+  },
+  4: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const marsJ2000 = new Date('2002-01-01T00:00:00Z').getTime();
+      const solMs = 88775245;
+      const marsSol = (date.getTime() - marsJ2000) / solMs;
+      const solFrac = (date.getTime() % solMs) / solMs;
+      const solHour = solFrac * 24.66;
+      const solH = Math.floor(solHour);
+      const solM = Math.floor((solHour - solH) * 60);
+      const solS = Math.floor(((solHour - solH) * 60 - solM) * 60);
+      const darianMonth = Math.floor(marsSol % 669) / 669;
+      const darianDay = Math.floor(marsSol) % 669;
+      const fontSize = Math.min(w * 0.03, h * 0.045);
+      const cx = w/2;
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${fontSize * 1.5}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`Sol ${Math.floor(marsSol)}`, cx, h * 0.15);
+      ctx.fillStyle = '#e8a060';
+      ctx.font = `bold ${fontSize}px monospace`;
+      ctx.fillText(`${solH.toString().padStart(2,'0')}:${solM.toString().padStart(2,'0')}:${solS.toString().padStart(2,'0')} CMT`, cx, h * 0.25);
+      const solBarW = w * 0.6;
+      const solBarH = Math.min(h * 0.03, 20);
+      const solBarY = h * 0.35;
+      const solBarX = (w - solBarW) / 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.beginPath();
+      ctx.roundRect(solBarX, solBarY, solBarW, solBarH, solBarH/2);
+      ctx.fill();
+      ctx.fillStyle = '#e8a060';
+      ctx.beginPath();
+      ctx.roundRect(solBarX, solBarY, solBarW * solFrac, solBarH, solBarH/2);
+      ctx.fill();
+      ctx.fillStyle = '#555';
+      ctx.font = `${Math.min(w*0.02,h*0.03)}px monospace`;
+      ctx.fillText('Mars sol progress', cx, solBarY + solBarH + 20);
+      ctx.fillStyle = '#666';
+      ctx.font = `${fontSize * 0.7}px monospace`;
+      ctx.fillText(`Darian: month ${(darianMonth * 24).toFixed(1)}/24, day ${darianDay}/669`, cx, h * 0.5);
+      const sites = [
+        { name: 'Gale Crater', lon: 137.4 },
+        { name: 'Jezero', lon: 77.5 },
+        { name: 'Olympus Mons', lon: 226.2 }
+      ];
+      const earthAngle = (date.getTime() % 86400000) / 86400000 * Math.PI * 2;
+      sites.forEach((site, i) => {
+        const siteAngle = site.lon / 360 * Math.PI * 2;
+        const visible = Math.cos(earthAngle - siteAngle) > -0.3;
+        const localSol = ((date.getTime() - marsJ2000 + site.lon * 88775245/360) % solMs) / solMs;
+        const localH = Math.floor(localSol * 24.66);
+        ctx.fillStyle = visible ? '#a0e8af' : '#333';
+        ctx.font = `${Math.min(w*0.02,h*0.03)}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`${site.name}: ${localH.toString().padStart(2,'0')}h`, cx, h * 0.6 + i * 25);
+      });
+      ctx.fillStyle = '#444';
+      ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`Earth: ${(date.toTimeString().split(' ')[0])}`, cx, h * 0.9);
+    },
+    description: 'Mars Sol Date, Coordinated Mars Time, Darian calendar, local solar time at rover sites — extended to Titan and Europa.',
+    displayName: 'Interplanetary Time',
+    type: 'Numeric'
+  },
+  5: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const cx = w/2, cy = h/2;
+      const t = date.getTime() / 1000;
+      const numHarmonics = 6;
+      const baseR = Math.min(w, h) * 0.12;
+      let x = cx, y = cy;
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < numHarmonics; i++) {
+        const freq = i + 1;
+        const amp = baseR / freq;
+        const angle = t * freq * 0.5 + i * 0.3;
+        const prevX = x, prevY = y;
+        x += Math.cos(angle) * amp;
+        y += Math.sin(angle) * amp;
+        ctx.strokeStyle = `hsl(${120 + i * 20}, 60%, 50%)`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(prevX, prevY, amp, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(prevX, prevY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#a0e8af';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      const hourAngle = (t % 43200) / 43200 * Math.PI * 2 - Math.PI/2;
+      const minuteAngle = (t % 3600) / 3600 * Math.PI * 2 - Math.PI/2;
+      ctx.strokeStyle = '#e8a060';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(hourAngle) * baseR * 0.8, cy + Math.sin(hourAngle) * baseR * 0.8);
+      ctx.stroke();
+      ctx.strokeStyle = '#a0e8af';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(minuteAngle) * baseR, cy + Math.sin(minuteAngle) * baseR);
+      ctx.stroke();
+      ctx.fillStyle = '#555';
+      ctx.font = `${Math.min(w*0.02,h*0.03)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`${numHarmonics} harmonics · Fourier epicycle`, cx, cy + baseR * 2 + 25);
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${Math.min(w*0.035,h*0.06)}px monospace`;
+      ctx.fillText(date.toTimeString().split(' ')[0], cx, cy + baseR * 2 + 55);
+    },
+    description: 'Clock hands drawn by rotating vectors — add harmonics and watch the drawing sharpen via DFT. Each harmonic is a rotating circle (epicycle).',
+    displayName: 'Fourier Epicycle Clock',
+    type: 'Visual+DFT'
+  },
+  6: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const now = date.toTimeString().split(' ')[0].replace(/:/g, '');
+      const digits = now.split('').map(Number);
+      const cellSize = Math.min(w / 42, h / 21);
+      const gridW = 14 * 3;
+      const gridH = 5;
+      const offsetX = (w - gridW * cellSize) / 2;
+      const offsetY = (h - gridH * cellSize) / 2;
+      const segments = [
+        [1,1,1,0,1,1,1], // 0
+        [0,0,1,0,0,1,0], // 1
+        [1,0,1,1,1,0,1], // 2
+        [1,0,1,1,0,1,1], // 3
+        [0,1,1,1,0,1,0], // 4
+        [1,1,0,1,0,1,1], // 5
+        [1,1,0,1,1,1,1], // 6
+        [1,0,1,0,0,1,0], // 7
+        [1,1,1,1,1,1,1], // 8
+        [1,1,1,1,0,1,0]  // 9
+      ];
+      const state = [];
+      for (let r = 0; r < gridH; r++) {
+        state[r] = [];
+        for (let c = 0; c < gridW; c++) {
+          state[r][c] = Math.random() > 0.7 ? 1 : 0;
+        }
+      }
+      for (let d = 0; d < digits.length; d++) {
+        const seg = segments[digits[d]];
+        for (let r = 0; r < 5; r++) {
+          for (let c = 0; c < 3; c++) {
+            if (seg[r * 3 + c]) {
+              state[r][d * 3 + c + 3] = 1;
+            }
+          }
+        }
+      }
+      for (let r = 0; r < gridH; r++) {
+        for (let c = 0; c < gridW; c++) {
+          const x = offsetX + c * cellSize;
+          const y = offsetY + r * cellSize;
+          if (state[r][c]) {
+            ctx.fillStyle = '#a0e8af';
+            ctx.fillRect(x, y, cellSize - 1, cellSize - 1);
+          } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.03)';
+            ctx.fillRect(x, y, cellSize - 1, cellSize - 1);
+          }
+        }
+      }
+      ctx.fillStyle = '#555';
+      ctx.font = `${Math.min(w*0.02,h*0.03)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText('Conway\'s Game of Life · 7-segment digits', w/2, offsetY + gridH * cellSize + 25);
+    },
+    description: 'Seven-segment digits built from stable Conway\'s Life patterns, with glider collisions flipping segments each minute.',
+    displayName: 'Game of Life Clock',
+    type: 'Simulation'
+  },
+  7: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const cx = w/2, cy = h/2;
+      const maxR = Math.min(w, h) * 0.4;
+      const planck = 1e-43;
+      const universeAge = 4.35e17;
+      const oneSecond = 1;
+      const now = date.getTime() / 1000;
+      const logMin = Math.log10(planck);
+      const logMax = Math.log10(universeAge);
+      const logNow = Math.log10(Math.max(now, 1));
+      const barW = w * 0.7;
+      const barH = Math.min(h * 0.04, 30);
+      const barY = cy - barH/2;
+      const barX = (w - barW) / 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW, barH, barH/2);
+      ctx.fill();
+      const pos = (logNow - logMin) / (logMax - logMin);
+      const grad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+      grad.addColorStop(0, '#222');
+      grad.addColorStop(0.5, '#a0e8af');
+      grad.addColorStop(1, '#e8a060');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW * Math.min(pos, 1), barH, barH/2);
+      ctx.fill();
+      ctx.fillStyle = '#e0e0e8';
+      ctx.beginPath();
+      ctx.arc(barX + barW * Math.min(pos, 1), cy, 6, 0, Math.PI * 2);
+      ctx.fill();
+      const annotations = [
+        { val: Math.log10(1e-43), label: 'Planck' },
+        { val: Math.log10(1e-23), label: 'CPU cycle' },
+        { val: Math.log10(1e-13), label: 'Cs oscillation' },
+        { val: Math.log10(1), label: '1 second' },
+        { val: Math.log10(86400), label: 'Sidereal day' },
+        { val: Math.log10(3.15e7), label: 'Year' },
+        { val: Math.log10(universeAge), label: 'Age of universe' }
+      ];
+      ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+      ctx.textAlign = 'center';
+      annotations.forEach(a => {
+        const ax = barX + ((a.val - logMin) / (logMax - logMin)) * barW;
+        ctx.fillStyle = a.label === '1 second' ? '#e0e0e8' : '#444';
+        ctx.fillText(a.label, ax, barY + barH + 20);
+        ctx.strokeStyle = a.label === '1 second' ? '#a0e8af' : '#333';
+        ctx.lineWidth = a.label === '1 second' ? 2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(ax, barY - 5);
+        ctx.lineTo(ax, barY + barH + 5);
+        ctx.stroke();
+      });
+      const cesium = Math.floor(now * 9192631770);
+      ctx.fillStyle = '#555';
+      ctx.font = `${Math.min(w*0.02,h*0.03)}px monospace`;
+      ctx.fillText(`Cesium transitions since midnight: ${cesium.toLocaleString()}`, cx, barY + barH + 45);
+    },
+    description: 'Axis from Planck time (10^-43 s) to the age of the universe (4.35×10^17 s), marker at "one second," annotated by decade — live cesium-133 transition counter since midnight.',
+    displayName: 'Log-Scale-of-Time Clock',
+    type: 'Visual'
+  },
+  8: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const h24 = date.getHours();
+      const m = date.getMinutes();
+      const s = date.getSeconds();
+      const cx = w/2, cy = h/2;
+      const encodings = [
+        { name: 'Sexagesimal', val: `${h24}:${m}:${s}` },
+        { name: 'BCD', val: (h24).toString(2).padStart(6,'0') + ':' + (m).toString(2).padStart(6,'0') + ':' + (s).toString(2).padStart(6,'0') },
+        { name: 'Hex fraction', val: (((h24*3600+m*60+s)/86400).toString(16)).substring(2) },
+        { name: 'Swatch .beat', val: Math.floor(((h24+1)%24*3600+m*60+s)/86.4) },
+        { name: 'French decimal', val: `${Math.floor(h24*10/24)}h${Math.floor(m*100/60)}m${Math.floor(s*100/60)}s` }
+      ];
+      const fontSize = Math.min(w * 0.025, h * 0.04);
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${fontSize * 1.5}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(encodings[0].val, cx, h * 0.2);
+      encodings.forEach((e, i) => {
+        const y = h * 0.35 + i * h * 0.12;
+        ctx.fillStyle = i === 0 ? '#a0e8af' : '#666';
+        ctx.font = `bold ${fontSize}px monospace`;
+        ctx.textAlign = 'left';
+        ctx.fillText(e.name, w * 0.15, y);
+        ctx.fillStyle = i === 0 ? '#e0e0e8' : '#888';
+        ctx.font = `${fontSize * 0.8}px monospace`;
+        ctx.fillText(e.val, w * 0.5, y);
+      });
+      ctx.fillStyle = '#444';
+      ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText('toggle encodings with ← →', cx, h * 0.9);
+    },
+    description: 'Toggleable encodings: binary-coded sexagesimal, balanced ternary, hexadecimal fraction-of-day, French Revolutionary decimal, Swatch .beat. Same Date object reformatted in each base.',
+    displayName: 'Alt-Radix Clock',
+    type: 'Numeric'
+  },
+  9: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const t = date.getTime() / 1000;
+      const unix = Math.floor(t);
+      const jd = 2440587.5 + t / 86400;
+      const mjdf = 40587 + t / 86400;
+      const gpsWeek = Math.floor((t - 315964800) / 604800);
+      const gpsTow = (t - 315964800) % 604800;
+      const int38End = 2147483647;
+      const int38Pct = Math.min(unix / int38End, 1);
+      const fontSize = Math.min(w * 0.025, h * 0.035);
+      const items = [
+        { label: 'Unix seconds', value: unix.toLocaleString() },
+        { label: 'Julian Date', value: jd.toFixed(4) },
+        { label: 'Modified JD', value: mjdf.toFixed(4) },
+        { label: 'GPS Week / ToW', value: `${gpsWeek} / ${Math.floor(gpsTow).toLocaleString()}s` },
+        { label: 'TAI-UTC offset', value: `${37}s (leap seconds)` }
+      ];
+      items.forEach((item, i) => {
+        const y = h * 0.15 + i * h * 0.12;
+        ctx.fillStyle = '#666';
+        ctx.font = `${fontSize * 0.8}px monospace`;
+        ctx.textAlign = 'left';
+        ctx.fillText(item.label, w * 0.15, y);
+        ctx.fillStyle = '#e0e0e8';
+        ctx.font = `bold ${fontSize}px monospace`;
+        ctx.fillText(item.value, w * 0.5, y);
+      });
+      const barW = w * 0.5;
+      const barH = Math.min(h * 0.03, 20);
+      const barY = h * 0.82;
+      const barX = (w - barW) / 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW, barH, barH/2);
+      ctx.fill();
+      ctx.fillStyle = int38Pct > 0.9 ? '#e06060' : '#e8a060';
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW * int38Pct, barH, barH/2);
+      ctx.fill();
+      ctx.fillStyle = '#555';
+      ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`2038 INT32 overflow: ${(int38Pct * 100).toFixed(2)}% complete`, w/2, barY + barH + 20);
+    },
+    description: 'Unix seconds, Julian Date, Modified JD, TAI-UTC leap second offset, GPS week number, progress bar to the 2038 INT32 overflow.',
+    displayName: 'Epoch Clock',
+    type: 'Numeric'
+  },
+  10: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const now = date.toTimeString().split(' ')[0].replace(/:/g, '');
+      const piDigits = '314159265358979323846264338327950288419716939937510';
+      const idx = piDigits.indexOf(now.substring(0, 6));
+      const fontSize = Math.min(w * 0.04, h * 0.06);
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${fontSize}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`Searching π for ${now}`, w/2, h * 0.2);
+      if (idx >= 0) {
+        ctx.fillStyle = '#a0e8af';
+        ctx.font = `bold ${fontSize * 1.2}px monospace`;
+        ctx.fillText(`Found at position ${idx}!`, w/2, h * 0.35);
+        ctx.fillStyle = '#666';
+        ctx.font = `${fontSize * 0.6}px monospace`;
+        ctx.fillText(`π digits: ...${piDigits.substring(Math.max(0,idx-5), idx)}[${now}]${piDigits.substring(idx+6, idx+11)}...`, w/2, h * 0.45);
+      } else {
+        ctx.fillStyle = '#e8a060';
+        ctx.font = `bold ${fontSize * 0.8}px monospace`;
+        ctx.fillText(`Not found in first ${piDigits.length} digits`, w/2, h * 0.35);
+      }
+      const cx = w/2, cy = h * 0.65;
+      const maxR = Math.min(w, h) * 0.2;
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, maxR, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let i = 0; i < Math.min(piDigits.length, 100); i++) {
+        const angle = (i / 100) * Math.PI * 2 - Math.PI/2;
+        const r = maxR * (i / 100);
+        const digit = parseInt(piDigits[i]);
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        ctx.fillStyle = `hsl(${digit * 36}, 60%, 60%)`;
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#444';
+      ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText('Ulam spiral of π digits', cx, cy + maxR + 20);
+    },
+    description: 'Searches bundled pi digits for the current time (HHMMSS), displays the offset, with a spiral visualization of your position in the digit stream.',
+    displayName: 'Pi Clock',
+    type: 'Numeric'
+  },
+  11: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const heatDeath = 1e100;
+      const universeAge = 1.38e10;
+      const protonDecay = 1e34;
+      const t = date.getTime() / 1000;
+      const yearsSinceBigBang = universeAge;
+      const yearsToHeatDeath = heatDeath - yearsSinceBigBang;
+      const progress = yearsSinceBigBang / heatDeath;
+      const fontSize = Math.min(w * 0.03, h * 0.045);
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${fontSize * 1.3}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText('Thermal Death Clock', w/2, h * 0.1);
+      ctx.fillStyle = '#666';
+      ctx.font = `${fontSize * 0.7}px monospace`;
+      ctx.fillText(`10^${yearsSinceBigBang.toExponential(2).split('e')[1]} years since Big Bang`, w/2, h * 0.2);
+      const barW = w * 0.6;
+      const barH = Math.min(h * 0.04, 30);
+      const barY = h * 0.3;
+      const barX = (w - barW) / 2;
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW, barH, barH/2);
+      ctx.fill();
+      const logProgress = Math.log10(progress + 1e-100) / 100;
+      ctx.fillStyle = '#e06060';
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW * Math.max(logProgress, 0.001), barH, barH/2);
+      ctx.fill();
+      ctx.fillStyle = '#555';
+      ctx.font = `${Math.min(w*0.02,h*0.03)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`Progress to heat death: ~${(progress * 1e100).toExponential(2)}%`, w/2, barY + barH + 25);
+      const protonDecayed = 1 - Math.exp(-t / (protonDecay * 3.15e7));
+      ctx.fillStyle = '#e8a060';
+      ctx.font = `${fontSize * 0.8}px monospace`;
+      ctx.fillText(`Protons decayed: ${(protonDecayed * 1e10).toExponential(3)}%`, w/2, h * 0.55);
+      ctx.fillStyle = '#444';
+      ctx.font = `${Math.min(w*0.02,h*0.03)}px monospace`;
+      ctx.fillText(`Proton half-life lower bound: >${protonDecay.toExponential(1)} years`, w/2, h * 0.65);
+      const markers = [
+        { val: 1e10, label: 'Now (Big Bang)' },
+        { val: 1e40, label: 'Last black holes' },
+        { val: 1e100, label: 'Heat death' }
+      ];
+      markers.forEach((m, i) => {
+        const my = h * 0.75 + i * 25;
+        ctx.fillStyle = i === 0 ? '#a0e8af' : '#444';
+        ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+        ctx.fillText(m.label, w/2, my);
+      });
+    },
+    description: 'Logarithmic countdown from the heat death of the universe (~10^100 years), with proton decay simulation (τp ≈ 10^34 years).',
+    displayName: 'Thermal Death Clock',
+    type: 'Visual'
+  },
+  12: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const h24 = date.getHours();
+      const m = date.getMinutes();
+      const s = date.getSeconds();
+      const bits = [
+        ...((h24 >> 0) & 1).toString(),
+        ...((h24 >> 1) & 1).toString(),
+        ...((h24 >> 2) & 1).toString(),
+        ...((h24 >> 3) & 1).toString(),
+        ...((h24 >> 4) & 1).toString(),
+        ...((h24 >> 5) & 1).toString(),
+        ...((m >> 0) & 1).toString(),
+        ...((m >> 1) & 1).toString(),
+        ...((m >> 2) & 1).toString(),
+        ...((m >> 3) & 1).toString(),
+        ...((m >> 4) & 1).toString(),
+        ...((m >> 5) & 1).toString(),
+        ...((s >> 0) & 1).toString(),
+        ...((s >> 1) & 1).toString(),
+        ...((s >> 2) & 1).toString(),
+        ...((s >> 3) & 1).toString(),
+        ...((s >> 4) & 1).toString(),
+        ...((s >> 5) & 1).toString()
+      ];
+      const barW = w * 0.85;
+      const barH = Math.min(h * 0.025, 18);
+      const barX = (w - barW) / 2;
+      const startY = h * 0.2;
+      const rowH = h * 0.15;
+      const modes = [
+        { name: 'Binary', vals: bits },
+        { name: 'BCD', vals: [
+          (h24 >> 0) & 1, (h24 >> 1) & 1, (h24 >> 2) & 1, (h24 >> 3) & 1,
+          ((h24 >> 4) & 1) | ((h24 >> 0 & 9) >> 4 & 1),
+          (m >> 0) & 1, (m >> 1) & 1, (m >> 2) & 1, (m >> 3) & 1, (m >> 4) & 1,
+          (s >> 0) & 1, (s >> 1) & 1, (s >> 2) & 1, (s >> 3) & 1, (s >> 4) & 1
+        ]},
+        { name: 'Gray Code', vals: bits.map((b, i) => parseInt(b) ^ parseInt(bits[(i+1) % bits.length])) }
+      ];
+      modes.forEach((mode, mi) => {
+        const y = startY + mi * rowH;
+        ctx.fillStyle = '#555';
+        ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+        ctx.textAlign = 'left';
+        ctx.fillText(mode.name, w * 0.05, y - 5);
+        mode.vals.forEach((b, bi) => {
+          const bx = barX + bi * (barW / mode.vals.length);
+          const bw = barW / mode.vals.length - 1;
+          ctx.fillStyle = b ? (mi === 0 ? '#a0e8af' : mi === 1 ? '#e8a060' : '#6090c0') : 'rgba(255,255,255,0.04)';
+          ctx.fillRect(bx, y, bw, barH);
+        });
+      });
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${Math.min(w*0.05,h*0.08)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`${h24.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`, w/2, h * 0.75);
+      ctx.fillStyle = '#444';
+      ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+      ctx.fillText('Binary Market Clock · stock-ticker aesthetic', w/2, h * 0.85);
+    },
+    description: 'HH:MM:SS as colored 0/1 bars with BCD, straight binary, and Gray-code toggles and a stock-ticker aesthetic.',
+    displayName: 'Binary Market Clock',
+    type: 'Numeric'
+  },
+  13: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const h24 = date.getHours();
+      const m = date.getMinutes();
+      const target = h24 * 100 + m;
+      const sieveSize = Math.max(target + 10, 100);
+      const isPrime = new Array(sieveSize).fill(true);
+      isPrime[0] = isPrime[1] = false;
+      for (let i = 2; i * i < sieveSize; i++) {
+        if (isPrime[i]) {
+          for (let j = i * i; j < sieveSize; j += i) isPrime[j] = false;
+        }
+      }
+      const primes = [];
+      for (let i = 2; i < sieveSize; i++) {
+        if (isPrime[i]) primes.push(i);
+      }
+      const primePairs = [];
+      for (let i = 0; i < primes.length && primePairs.length < 5; i++) {
+        for (let j = i; j < primes.length && primePairs.length < 5; j++) {
+          if (primes[i] + primes[j] === target) primePairs.push([primes[i], primes[j]]);
+        }
+      }
+      const fontSize = Math.min(w * 0.025, h * 0.035);
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${fontSize}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`${h24.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')} → ${target}`, w/2, h * 0.1);
+      if (primePairs.length > 0) {
+        ctx.fillStyle = '#a0e8af';
+        ctx.font = `bold ${fontSize * 0.8}px monospace`;
+        primePairs.forEach((pair, i) => {
+          ctx.fillText(`${pair[0]} + ${pair[1]} = ${target}`, w/2, h * 0.2 + i * 25);
+        });
+      } else {
+        ctx.fillStyle = '#e8a060';
+        ctx.font = `${fontSize * 0.7}px monospace`;
+        ctx.fillText('No prime pair sum found', w/2, h * 0.2);
+      }
+      const gridW = Math.min(sieveSize, 80);
+      const cellSize = Math.min(w / gridW, h / 15);
+      const offsetX = (w - gridW * cellSize) / 2;
+      const offsetY = h * 0.35;
+      for (let i = 0; i < gridW; i++) {
+        const x = offsetX + i * cellSize;
+        const y = offsetY;
+        if (isPrime[i]) {
+          const isTarget = i === target;
+          ctx.fillStyle = isTarget ? '#a0e8af' : 'rgba(160, 232, 175, 0.3)';
+          ctx.fillRect(x, y, cellSize - 1, cellSize * 8);
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,0.03)';
+          ctx.fillRect(x, y, cellSize - 1, cellSize * 8);
+        }
+      }
+      ctx.fillStyle = '#555';
+      ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`Sieve of Eratosthenes (0–${gridW-1}) · ${primes.length} primes`, w/2, offsetY + cellSize * 9 + 20);
+      const piX = primes.length;
+      ctx.fillStyle = '#666';
+      ctx.font = `${Math.min(w*0.02,h*0.03)}px monospace`;
+      ctx.fillText(`π(${gridW}) = ${piX} (prime-counting function)`, w/2, offsetY + cellSize * 9 + 45);
+    },
+    description: 'HH:MM encoded as prime pairs, live Sieve of Eratosthenes on screen, π(x) curve overlay.',
+    displayName: 'Prime Number Clock',
+    type: 'Numeric'
+  },
+  14: {
+    draw(ctx, date, w, h) {
+      ctx.fillStyle = '#0a0a0f';
+      ctx.fillRect(0, 0, w, h);
+      const t = date.getTime() / 1000;
+      const cx = w/2, cy = h * 0.35;
+      const maxR = Math.min(w, h) * 0.3;
+      const pulsars = [
+        { name: 'PSR B1937+21', period: 0.001557806973, color: '#a0e8af' },
+        { name: 'PSR B0531+21', period: 0.03349976, color: '#e8a060' },
+        { name: 'PSR B0833-45', period: 0.089304817, color: '#6090c0' }
+      ];
+      pulsars.forEach((p, i) => {
+        const rotations = t / p.period;
+        const angle = (rotations % 1) * Math.PI * 2 - Math.PI/2;
+        const r = maxR * (1 - i * 0.25);
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+        ctx.stroke();
+        const pulsePhase = (rotations % 1);
+        const pulseHeight = Math.exp(-0.5 * Math.pow((pulsePhase - 0.5) / 0.05, 2));
+        const graphY = h * 0.7 + i * 30;
+        const graphW = w * 0.6;
+        const graphX = (w - graphW) / 2;
+        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(graphX, graphY);
+        ctx.lineTo(graphX + graphW, graphY);
+        ctx.stroke();
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let px = 0; px < graphW; px++) {
+          const phase = px / graphW;
+          const amp = Math.exp(-0.5 * Math.pow((phase - 0.5) / 0.05, 2));
+          const py = graphY - amp * 15;
+          if (px === 0) ctx.moveTo(graphX + px, py);
+          else ctx.lineTo(graphX + px, py);
+        }
+        ctx.stroke();
+        ctx.fillStyle = '#555';
+        ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+        ctx.textAlign = 'left';
+        ctx.fillText(`${p.name}: ${p.period * 1000}ms`, graphX, graphY + 15);
+      });
+      ctx.fillStyle = '#e0e0e8';
+      ctx.font = `bold ${Math.min(w*0.035,h*0.06)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(date.toTimeString().split(' ')[0], cx, h * 0.9);
+      ctx.fillStyle = '#444';
+      ctx.font = `${Math.min(w*0.015,h*0.025)}px monospace`;
+      ctx.fillText('Pulsar timing · real rotation periods as clock hands', cx, h * 0.95);
+    },
+    description: 'Real pulsar rotation periods (PSR B1937+21 at 1.557ms, Vela, Crab) as clock hands. Each "tick" is a pulsar rotation with pulse profile light curves.',
+    displayName: 'Pulsar Timing Clock',
+    type: 'Visual'
+  }
+};
+
+let currentClock = 0;
+const canvas = document.getElementById('clock-canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+function drawFrame() {
+  const clock = clocks[currentClock];
+  if (clock) clock.draw(ctx, new Date(), canvas.width, canvas.height);
+  requestAnimationFrame(drawFrame);
+}
+
+document.addEventListener('datastar:after-request', (e) => {
+  if (e.detail.signals?.clockIndex !== undefined) {
+    currentClock = e.detail.signals.clockIndex;
+  }
+});
+
+const observer = new MutationObserver(() => {
+  const name = document.querySelector('.clock-name')?.textContent.trim();
+  for (const [idx, c] of Object.entries(clocks)) {
+    if (c.displayName === name) { currentClock = parseInt(idx); break; }
+  }
+});
+const clockNameEl = document.querySelector('.clock-name');
+if (clockNameEl) observer.observe(clockNameEl, { childList: true, characterData: true, subtree: true });
+
+drawFrame();
+
+document.addEventListener('keydown', (e) => {
+  switch(e.key) {
+    case 'ArrowRight': fetch('/next'); e.preventDefault(); break;
+    case 'ArrowLeft': fetch('/prev'); e.preventDefault(); break;
+    case '?': case 'i':
+      const overlay = document.getElementById('info-overlay');
+      overlay.style.display = overlay.style.display === 'flex' ? 'none' : 'flex';
+      e.preventDefault(); break;
+    case 'f':
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+      e.preventDefault(); break;
+    case 'Escape':
+      document.getElementById('info-overlay').style.display = 'none'; break;
+  }
+});
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+}
+
+function connectTick() {
+  const evtSource = new EventSource('/tick');
+  evtSource.addEventListener('datastar-patch-signals', (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.clockName) {
+        document.querySelector('.clock-name').textContent = data.clockName;
+      }
+    } catch {}
+  });
+  evtSource.onerror = () => setTimeout(connectTick, 3000);
+}
+connectTick();
+</script>
+</body>
+</html>
