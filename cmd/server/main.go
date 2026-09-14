@@ -59,7 +59,7 @@ var state = AppState{
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "31337"
 	}
 
 	http.HandleFunc("/", handleIndex)
