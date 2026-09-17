@@ -1,0 +1,29 @@
+<!--
+name: Sky Dial
+tagline: The real sky over your head right now; the stars themselves are the hour hand
+category: Astronomy
+order: 50
+accent: #9cc4ff
+-->
+<h3>How to read it</h3>
+<p>The disc is the whole sky as you would see it lying on your back: the <b>zenith</b> is in the centre, the <b>horizon</b> is the rim, north is at the top and <b>east is on the left</b> (it has to be, because you are looking up, not down at a map). Stars, planets, the Sun and the Moon are drawn where they really are for this location.</p>
+<p>Two rings turn with the sky. The white <b>meridian pointer</b> marks the line due south (due north in the southern hemisphere): read your <b>local time</b> on the orange ring and <b>local sidereal time</b> on the blue ring. The small dot on the orange ring marks today's local solar noon, when the Sun crosses the meridian.</p>
+
+<h3>How it works</h3>
+<p>The Earth turns once relative to the <em>stars</em> every <b>23 h 56 m 4 s</b>, a <b>sidereal day</b>. Our clocks follow the <em>Sun</em>, and because Earth also moves about 1° along its orbit each day, it needs about 4 extra minutes of spin to bring the Sun back to the meridian. That is the 24-hour solar day.</p>
+<p><b>Sidereal time</b> is simply the right ascension currently crossing your meridian. It is computed from Greenwich Mean Sidereal Time plus your longitude:</p>
+<div class="formula">GMST = 280.46062° + 360.98564737° × (JD − 2451545.0)
+LST  = GMST + longitude</div>
+<p>Each star's altitude and azimuth then follow from its right ascension (α) and declination (δ), your latitude (φ) and the hour angle H = LST − α. The map uses an <b>azimuthal-equidistant projection</b>: distance from the centre is proportional to 90° − altitude, so the altitude circles are evenly spaced.</p>
+<p>The Sun and Moon come from low-precision almanac series, and the planets from JPL's Keplerian orbital elements (accurate to a fraction of a degree). The sky colour follows the Sun's altitude through civil (−6°), nautical (−12°) and astronomical (−18°) twilight.</p>
+
+<h3>Things to notice</h3>
+<ul>
+  <li>Each star rises about <b>4 minutes earlier every night</b>, which adds up to 2 hours a month. That is why the winter and summer constellations differ.</li>
+  <li><b>Polaris</b> barely moves. Its altitude equals your latitude, and the two end stars of the Big Dipper's bowl point straight at it.</li>
+  <li>The planets and the Moon always stay near the dashed <b>ecliptic</b>, the plane of the solar system.</li>
+  <li>The Moon's lit side always faces the Sun, even when the Sun is below the horizon.</li>
+</ul>
+
+<h3>Nerd note</h3>
+<p>Star positions are for epoch J2000. Precession of the equinoxes has since shifted them by about a third of a degree, too little to see at this scale. In about 12,000 years Vega, not Polaris, will be the pole star.</p>

@@ -1,0 +1,25 @@
+<!--
+name: Hilbert Day
+tagline: The whole day folded into a square along one unbroken space-filling curve
+category: Mathematics
+order: 40
+accent: #6fb8ff
+-->
+<h3>How to read it</h3>
+<p>Midnight starts in the bottom-left corner. The glowing head crawls along a single continuous line that visits all <b>65,536</b> cells of a 256&nbsp;×&nbsp;256 grid exactly once, reaching the bottom-right corner at the next midnight. Each cell is <b>1.318 seconds</b>. The lit part is the day so far. Each hour has its own colour and fills its own patch, labelled with the hour. The exact time is on the right.</p>
+
+<h3>How it works</h3>
+<p>This is an order-8 <b>Hilbert curve</b>, described by David Hilbert in 1891 a year after Peano found the first space-filling curve. It is built recursively: split the square into four quadrants, visit them in a U-shape, and inside each quadrant draw a smaller, rotated copy of the same U. Eight levels of that recursion give 4<sup>8</sup> cells.</p>
+<p>Because of the recursion, a cell's position is just its index written in base 4: every digit picks one of four quadrants, one zoom level at a time. The dashed nested boxes around the head show the first four digits of the current <b>base-4 address</b>.</p>
+<div class="formula">first quadrant  = 00:00–06:00
+second quadrant = 06:00–12:00   (and so on)</div>
+
+<h3>Why it matters</h3>
+<ul>
+  <li><b>Locality</b>: moments that are close in time are always close on the square. Compare the unrolled timeline bar to the square: every hour stays a compact blob, never a stripe.</li>
+  <li>Databases and map services use Hilbert ordering to store nearby places on nearby disk pages (e.g. spatial indexes, Google's S2 geometry library).</li>
+  <li>It has been used to lay out the IPv4 address space: xkcd's 2006 "Map of the Internet" puts neighbouring address blocks next to each other this way.</li>
+</ul>
+
+<h3>Nerd note</h3>
+<p>As the order goes to infinity the curve passes through <em>every</em> point of the square. A one-dimensional line ends up completely filling a two-dimensional area, which is part of why "dimension" is a subtler idea than it looks.</p>

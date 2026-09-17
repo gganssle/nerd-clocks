@@ -1,140 +1,115 @@
-# Nerd Clocks
+# Nerd Clocks (Claude Code edition)
 
-A full-screen, browser-based nerdy clock collection running locally in your
-office. Click to cycle through 14+ clocks, press `?` to learn how each one
-works.
+A full-screen gallery of unusual clocks for an office monitor. Each one tells
+the real time through a piece of mathematics, physics, computing history or
+astronomy, and each one can explain itself to whoever is standing in front of
+the screen.
 
-Built with [Datastar](https://data-star.dev/) — a hypermedia framework that
-drives reactivity from the backend with zero JavaScript build steps.
+> This branch (`claude-code-version`) is an independent re-implementation of
+> the project on `main`, written from scratch by Claude Code so the two builds
+> can be compared.
 
-## Clocks
+## Run it
 
-| # | Clock | What you see |
-|---|-------|-------------|
-| 1 | **Sidereal Clock with Analemma** | Two hands: mean solar time and local sidereal time drifting ~3m56s/day, with the equation of time rendered as a figure-eight |
-| 2 | **Relativistic Drift Clock** | Three nanosecond counters (sea level, altitude, GPS satellite) showing GR blueshift and SR velocity divergence — the real +38 µs/day that makes GPS work |
-| 3 | **Antikythera Orrery** | Concentric dials: sun, moon with variable-speed lunar anomaly, zodiac ring, Metonic and Saros spirals, half-black rotating moon phase |
-| 4 | **Interplanetary Time** | Mars Sol Date, Coordinated Mars Time, Darian calendar, local solar time at rover sites — extended to Titan and Europa |
-| 5 | **Fourier Epicycle Clock** | Clock hands drawn by rotating vectors — add harmonics and watch the drawing sharpen via DFT |
-| 6 | **Game of Life Clock** | Seven-segment digits built from stable Conway's Life patterns, with glider collisions flipping segments each minute |
-| 7 | **Log-Scale-of-Time Clock** | Axis from Planck time to the age of the universe, marker at "one second," annotated by decade — live cesium-133 transition counter since midnight |
-| 8 | **Alt-Radix Clock** | Toggleable encodings: binary-coded sexagesimal, balanced ternary, hexadecimal fraction-of-day, French Revolutionary decimal, Swatch .beat |
-| 9 | **Epoch Clock** | Unix seconds, Julian Date, Modified JD, TAI−UTC leap second offset, GPS week number, progress bar to the 2038 INT32 overflow |
-| 10| **Pi Clock** | Searches bundled π digits for the current time (HHMMSS), displays the offset, with a spiral visualization of your position in the digit stream |
-| 11| **Thermal Death Clock** | Logarithmic countdown from the heat death of the universe (~10^100 years), with proton decay simulation |
-| 12| **Binary Market Clock** | HH:MM:SS as colored 0/1 bars with BCD, straight binary, and Gray-code toggles and a stock-ticker aesthetic |
-| 13| **Prime Number Clock** | HH:MM encoded as prime pairs, live Sieve of Eratosthenes on screen, π(x) curve overlay |
-| 14| **Pulsar Timing Clock** | Real pulsar rotation periods (PSR B1937+21, etc.) as clock hands, pulse profile light curves |
-
-## Features
-
-- **14+ nerdy clocks** — click to cycle, `←`/`→` to navigate
-- **Info overlay** — press `?` or click the info button to learn how each clock works
-- **Keyboard shortcuts** — `←` `→` navigate, `?` info, `f` fullscreen
-- **Fullscreen mode** — manual trigger with `f` or the fullscreen button
-- **Dark theme** — optimized for QHD (2560×1440) displays
-- **Zero build step** — single Go binary, no npm, no webpack
-
-## Quick Start
-
-### Prerequisites
-
-- Go 1.22 or later
-- A modern browser (Chrome, Firefox, Edge)
-
-### Run locally
+Requires Go 1.24+. Everything else (Datastar included) is vendored and embedded.
 
 ```bash
-git clone <repository>
-cd nerd-clocks
-go run ./cmd/server
+git fetch origin && git checkout claude-code-version
+go run ./cmd/nerd-clocks
 ```
 
-Open [http://localhost:8080](http://localhost:8080) in your browser.
-
-### Build a binary
+Then open <http://localhost:31337/> and press <kbd>f</kbd> for fullscreen.
+Startup prints a `/remote` URL for every LAN address; open that on your phone
+to control the monitor from across the room.
 
 ```bash
-go build -o nerd-clocks ./cmd/server
-./nerd-clocks
+go build -o nerd-clocks ./cmd/nerd-clocks   # single self-contained binary
+./nerd-clocks -cycle 300 -lat 47.61 -lon -122.33
 ```
 
-### Kiosk mode
-
-For a dedicated office display, run fullscreen:
-
-```bash
-./nerd-clocks &
-# Then press F in the browser or use your window manager's fullscreen
-```
-
-### Systemd service (optional)
-
-```ini
-# /etc/systemd/system/nerd-clocks.service
-[Unit]
-Description=Nerd Clocks Display
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/nerd-clocks
-Restart=on-failure
-Environment="DISPLAY=:0"
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl enable --now nerd-clocks
-```
-
-## Architecture
-
-```
-Browser (QHD, fullscreen)
-├── Datastar runtime (11.82 KiB, no build)
-├── HTML5 Canvas 2D (per-clock rendering)
-└── CSS overlay UI (title, info, fullscreen)
-        │
-        │  SSE / HTTP
-        ▼
-Go Backend
-├── /         → index.html (Datastar template)
-├── /next     → patch clock index
-├── /tick     → SSE: update time (1 Hz)
-├── /info     → patch: info overlay
-└── /pi-digits→ serve bundled π digits
-```
-
-**Tech stack:** Go 1.22+ backend, Datastar frontend, HTML5 Canvas 2D, no
-JavaScript build tools.
-
-See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the full architecture,
-clock details, and development roadmap.
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `-addr` | `:31337` | Listen address (or `NERD_CLOCKS_ADDR`) |
+| `-cycle` | `0` | Auto-advance every N seconds (0 = off; toggle live with <kbd>c</kbd>) |
+| `-clock` | first | Clock id to start on |
+| `-lat`, `-lon` | browser geolocation, else Greenwich | Observer location for the sky clock |
+| `-dev` | off | Serve `web/` from disk so edits show up on reload |
 
 ## Controls
 
-| Action | Click | Keyboard |
-|--------|-------|----------|
-| Next clock | Click anywhere on the clock face | `→` or `Right` |
-| Previous clock | — | `←` or `Left` |
-| Info overlay | Click `?` button | `?` or `i` |
-| Fullscreen | Click fullscreen button | `f` |
+| Key | Action |
+|-----|--------|
+| <kbd>→</kbd> / <kbd>space</kbd> / <kbd>n</kbd> | Next clock |
+| <kbd>←</kbd> / <kbd>p</kbd> | Previous clock |
+| <kbd>i</kbd> / <kbd>?</kbd> | "How it works" panel |
+| <kbd>g</kbd> | Grid of all clocks |
+| <kbd>c</kbd> | Toggle auto-cycle (2 min) |
+| <kbd>f</kbd> | Fullscreen |
+| <kbd>Esc</kbd> | Close panels |
 
-## Development
+The overlay and cursor fade out after a few seconds without mouse movement.
 
-See [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) for the phased
-implementation plan, file structure, and design decisions.
+Useful URL parameters: `?clock=<id>` shows one clock independently of the
+shared state, `&at=2026-12-31T23:59:30` starts the clock at a given moment,
+`&speed=60` fast-forwards time, and `&chrome=0` hides all overlays.
 
-### Adding a new clock
+## The clocks
 
-1. Create `clocks/<name>.ts` exporting `draw()`, `description`, and `displayName`
-2. Register it in `clocks/index.ts`
-3. Add it to the server's clock registry in `pkg/server/clock_registry.go`
-4. Update the README clock table
+| # | Clock | The idea |
+|---|-------|----------|
+| 01 | **Julia Set** | A GPU fractal whose parameter walks around the Mandelbrot cardioid once a minute |
+| 02 | **Pendulum Wave** | 18 pendulums tuned to realign exactly on every minute |
+| 03 | **Enigma** | A faithful Enigma I encrypting the current time, letter by letter |
+| 04 | **Hilbert Day** | The day as a space-filling curve with 65,536 cells |
+| 05 | **Sky Dial** | The real sky over your office; the stars themselves are the hour hand |
+| 06 | **Game of Life** | Conway's Life boiling around digits that refuse to die |
+| 07 | **Oscilloscope** | A vector clock drawn by a simulated CRT beam in X-Y mode |
+| 08 | **Towers of Hanoi** | 16 disks, 65,535 moves, one day; the big disk moves at noon |
+| 09 | **Kepler Orbits** | Hands that obey Kepler's laws, with a dial spaced for equal areas |
+| 10 | **Reaction–Diffusion** | Turing patterns growing into the shape of the time |
+| 11 | **WWVB** | The 60 kHz radio time code from Fort Collins, decoded live |
+| 12 | **Fourier Epicycles** | The time drawn by hundreds of spinning circles |
+| 13 | **Sorting Minute** | A new sorting algorithm races against every minute |
+| 14 | **Nixie Epoch** | Unix time on Nixie tubes, counting down to 2038 |
+| 15 | **Babylon & Maya** | Sexagesimal cuneiform and the Maya Long Count |
+| 16 | **Pong** | Hours versus minutes; somebody misses on purpose |
 
-## License
+## How it's built
 
-Private / Internal Use Only
+```
+cmd/nerd-clocks/        main: flags, embed, listen
+internal/clocks/        catalog loader (content/clocks/*.html headers)
+internal/server/        HTTP routes, shared-state hub, Datastar SSE stream
+web/templates/          display page, phone remote, server-rendered fragments
+web/static/app.js       client runtime: loads clock modules, drives rAF
+web/static/clocks/      one ES module per clock
+web/static/lib/         shared helpers (fonts, time, astronomy...)
+web/content/clocks/     one explainer per clock (metadata + HTML)
+web/static/vendor/      Datastar v1.0.3
+```
+
+**Datastar owns state; the canvas owns pixels.** Which clock is showing,
+whether the explainer or picker is open, and the auto-cycle timer all live on
+the Go server. Every browser (the office monitor, your laptop, your phone
+remote) holds one long-lived `GET /sse` stream. Any change (a key press is an
+`@post('/api/next')`) goes through the hub and is broadcast back as
+`datastar-patch-signals` plus server-rendered HTML fragments
+(`datastar-patch-elements`) for the title and the explainer. Nothing in the
+page updates its own UI state optimistically, so every screen always agrees.
+
+A single `data-effect="nerd.mount($clock)"` bridges into the client runtime,
+which lazy-loads `/static/clocks/<id>.js`, cross-fades it in, and calls its
+`frame(now)` every animation frame. Idle-hiding the overlay, the auto-cycle
+progress bar and the keyboard map are plain Datastar attributes too.
+
+See [docs/PLAN.md](docs/PLAN.md) for the design rationale and
+[docs/CLOCK_AUTHORING.md](docs/CLOCK_AUTHORING.md) to add a clock (two files,
+no registration).
+
+## Tests
+
+```bash
+go test ./...                      # catalog parsing, navigation, cycling, SSE stream
+```
+
+`scripts/shot.sh <id> out.png [time]` screenshots any clock in headless Chrome.

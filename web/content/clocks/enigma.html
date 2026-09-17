@@ -1,0 +1,28 @@
+<!--
+name: Enigma
+tagline: A faithful Enigma I encrypts the time, one key press per second
+category: Cryptography
+order: 30
+accent: #ffb347
+-->
+<h3>How to read it</h3>
+<p>Once a second an invisible operator presses a key. The <b>Klartext</b> (plaintext) tape spells out the time in words, like <code>TIMEXTENXFORTYXTWOXPMX</code>, with X standing in for spaces as German operators did. Each tape has 60 cells, one per second, so the highlighted cell is the current second. The <b>Geheimtext</b> tape below is what actually went out over the radio.</p>
+<p>In the middle you watch the electrical signal for the current key press: out through the plugboard, right to left through three rotors, bounced back by the reflector, and home again along a different route to light a lamp.</p>
+
+<h3>How it works</h3>
+<ul>
+  <li><b>Rotors</b> (Walzen) I, II and III each scramble the alphabet with fixed internal wiring. This one uses the real 1930s wirings: rotor I, for example, sends A to E and B to K.</li>
+  <li>Before every key press the right rotor turns one step, so the scramble changes with every letter. A notch on each rotor makes the next rotor turn, like an odometer.</li>
+  <li>The <b>reflector</b> (UKW-B) sends the current back through all three rotors. That makes the machine its own inverse: type the ciphertext in with the same settings and the plaintext comes out.</li>
+  <li>The <b>plugboard</b> (Steckerbrett) swaps 10 pairs of letters before and after the rotors.</li>
+</ul>
+<p>Each day's key sheet here (rotor ring settings and plugboard) comes from the date, and each minute gets a fresh start position (Spruchschlüssel) derived from the time. Every message is reproducible: set up a real Enigma or a simulator with the settings shown and it will decrypt.</p>
+
+<h3>The fatal flaw</h3>
+<p>Because of the reflector, a letter can <b>never encrypt to itself</b>. Bletchley Park exploited this: if you guess a crib such as <code>WETTERBERICHT</code> (weather report), you can slide it along the ciphertext and throw out every alignment where any letter matches itself. Turing's bombe then raced through rotor settings consistent with the crib.</p>
+
+<h3>Double stepping</h3>
+<p>The middle rotor has a mechanical quirk. When it reaches its own notch, the pawl pushes it <em>and</em> the left rotor on the very next key press, so it steps twice in a row. Watch for <code>ADU → ADV → AEW → BFX</code>. This machine reproduces the anomaly, because a real one does.</p>
+
+<h3>Nerd note</h3>
+<p>Counting rotor choices from a box of five, rotor orders, start positions, ring settings and 10 plugboard pairs, an Army Enigma had about 1.6 × 10<sup>20</sup> daily keys, roughly 67 bits. It was broken by procedural mistakes and mathematics, not brute force.</p>

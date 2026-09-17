@@ -1,0 +1,26 @@
+<!--
+name: Reaction–Diffusion
+tagline: Two virtual chemicals react and spread until they grow into the shape of the time
+category: Emergence
+order: 100
+accent: #ff9a5c
+-->
+<h3>How to read it</h3>
+<p>The warm, coral-like maze spells the hours and minutes. The cool, spotted texture around it is the same chemistry with slightly different settings. When the minute changes, the old digits melt back into spots and the new ones grow out of the pattern over the next several seconds. The seconds are counted in the bottom-right corner, and the light source makes one full circle every minute.</p>
+
+<h3>How it works</h3>
+<p>This is a <b>Gray–Scott</b> model running on your graphics card, with several hundred thousand cells updated about 700 times a second. Each cell holds two chemical concentrations, <b>U</b> and <b>V</b>:</p>
+<div class="formula">∂U/∂t = Dᵤ∇²U − UV² + F(1 − U)
+∂V/∂t = Dᵥ∇²V + UV² − (F + k)V</div>
+<ul>
+  <li><b>UV²</b>: the reaction. Two V molecules convert a U into a third V, so V catalyses its own production.</li>
+  <li><b>∇²</b>: diffusion. Each chemical spreads out, with U spreading twice as fast as V.</li>
+  <li><b>F</b> (feed) tops U back up, and <b>k</b> (kill) removes V.</li>
+</ul>
+<p>Tiny changes to F and k give completely different worlds. Inside the digits, <code>F = 0.0545, k = 0.062</code> grows <b>coral</b> mazes. Outside, <code>F = 0.0367, k = 0.0649</code> gives <b>mitosis</b>: spots that swell and divide like cells. The digit shapes are nothing more than a map of which parameters apply where.</p>
+
+<h3>Why it matters</h3>
+<p>In 1952, two years before his death, Alan Turing published <em>The Chemical Basis of Morphogenesis</em>. He showed that two diffusing, reacting substances can spontaneously turn a uniform mixture into stable spots and stripes: a fast-spreading inhibitor suppresses a slower, self-amplifying activator around each peak. These <b>Turing patterns</b> are now thought to shape zebrafish stripes, leopard spots, the ridges on the roof of a mouse's mouth, and even the spacing of hair follicles.</p>
+
+<h3>Nerd note</h3>
+<p>Turing did his calculations by hand and on the Manchester Mark 1, one of the first stored-program computers. Nobody could watch these patterns grow in real time until decades later. Here the whole simulation is just two tiny GPU shaders.</p>

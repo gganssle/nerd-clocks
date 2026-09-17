@@ -1,0 +1,20 @@
+<!--
+name: Oscilloscope
+tagline: A single electron beam, steered by two voltages, paints a clock face in green phosphor
+category: Electronics
+order: 70
+accent: #6dff9a
+-->
+<h3>How to read it</h3>
+<p>It's an analogue clock. The short kite is the hour hand, the long one is the minutes, and the thin needle sweeps the seconds. The digital readout underneath is drawn by the same beam. The two panes on the right show the voltages on channel 1 and channel 2 that are painting the picture.</p>
+
+<h3>How it works</h3>
+<p>A cathode-ray tube fires a narrow beam of electrons at a glass screen coated with <b>phosphor</b>, which glows where it is hit. Two pairs of deflection plates bend the beam: a voltage on the X plates pushes it left or right, and one on the Y plates pushes it up or down. Normally the X plates get a steady sawtooth "timebase", so the scope plots voltage against time. In <b>X-Y mode</b>, both axes are driven by input signals instead, so the screen plots one voltage against the other.</p>
+<p>A clock like this keeps a <b>display list</b> of line segments (circle, ticks, numerals, hands). A microcontroller walks along that list and sends each point's x and y to a pair of <b>DACs</b> (digital-to-analogue converters) wired to CH1 and CH2. Between strokes it <em>blanks</em> the beam, either through the scope's Z-axis input or by jumping so fast that the phosphor barely lights. Look closely and you can see the faint retrace lines here too.</p>
+<p>The picture only holds still because the beam re-traces it faster than the glow fades. That is <b>persistence</b>: the P31 green phosphor used in most scopes decays in well under a second.</p>
+
+<h3>Lissajous figures</h3>
+<p>Feed two sine waves into X and Y and you get a Lissajous figure. Equal frequencies make a circle or ellipse, a 1:2 ratio makes a figure-eight, and 3:2 makes a pretzel. The clock's outer circle is exactly this: <code>x = sin t</code>, <code>y = cos t</code>. Engineers once measured unknown frequencies by counting the lobes.</p>
+
+<h3>Nerd note</h3>
+<p>Vector displays like this ran some of the earliest computer graphics, including <em>Spacewar!</em> on the PDP-1 (1962), Asteroids (1979) and the Vectrex console. Because the beam draws only lines and never scans a raster, their edges are perfectly sharp and they have no pixels at all.</p>
