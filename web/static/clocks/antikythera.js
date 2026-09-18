@@ -183,7 +183,7 @@ export function create(host) {
       const W = surface.width, H = surface.height;
       const t = timeParts(now);
       // one continuous local timeline so every wheel is a function of the clock
-      const T = t.secOfDay + Math.floor(now / 86400000) * 86400;
+      const T = now / 1000 - t.date.getTimezoneOffset() * 60;
       const year = T / 43200;            // turns of the hour wheel
       const R = Math.min(W, H);
 
