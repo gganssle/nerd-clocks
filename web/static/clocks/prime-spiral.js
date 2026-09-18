@@ -52,7 +52,7 @@ export function create(host) {
     // Tall screens shrink the spiral so it clears the readouts above and below.
     const R = Math.min(W, H);
     const rad = W < H * 1.25
-      ? Math.max(W * 0.2, Math.min(W * 0.455, H * 0.5 - R * 0.24))
+      ? Math.max(W * 0.2, Math.min(W * 0.455, H * 0.5 - R * 0.28))
       : R * 0.455;
     const S = rad / Math.sqrt(DAY);
     const mk = () => {
