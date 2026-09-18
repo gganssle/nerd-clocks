@@ -1,0 +1,42 @@
+<!--
+name: Caesium Fountain
+tagline: One toss of cold atoms per second, counting out the SI definition
+category: Metrology
+order: 96
+accent: #7ecbff
+-->
+<h2>How to read it</h2>
+<p>
+  Every tick is a toss. A ball of laser-cooled caesium leaves the trap at the bottom exactly on
+  the second, flies up through the microwave cavity, turns over at the apex half a second later,
+  and falls back through the same cavity — one complete parabola per second. The counter across
+  the top runs from 0 to 9 192 631 770: that number of cycles of the caesium hyperfine transition
+  <em>is</em> the second.
+</p>
+
+<h2>How it works</h2>
+<p>
+  Six beams of 852 nm light (invisible to you — this is infrared) cool a cloud of caesium to about
+  a microkelvin, then a slight frequency offset between the upward and downward beams throws the
+  ball into the tube. On the way up it gets a microwave pulse; on the way down, half a second later,
+  it gets a second pulse. That is Ramsey's method of separated oscillatory fields, and the
+  interference between the two pulses produces the fringe pattern on the right:
+</p>
+<pre>P(δ) = cos²(π δ T),   T = flight time between pulses ≈ 1 s</pre>
+<p>
+  The central fringe is about 1 Hz wide out of 9.2 GHz, a line quality factor near 10<sup>10</sup>.
+  The servo never sits on the peak — it probes alternately at the two half-height points (the gold
+  dot hopping side to side) and steers the oscillator until the two answers match. Atoms that
+  made the transition come back in F = 4 and fluoresce brighter on the way down.
+</p>
+
+<h2>Nerd note</h2>
+<p>
+  Since 1967 the second has been defined as 9 192 631 770 periods of the radiation from the
+  transition between the two hyperfine levels of the ground state of caesium-133 — a definition
+  chosen to match the astronomical second that came before it, then frozen. The 2019 SI revision
+  went further: the metre, the kilogram, the ampere and the kelvin are all now pinned to fixed
+  constants, and every one of them is measured through a clock. Getting the second right is how
+  you get the rest of the SI right. A fountain like NIST-F2 is good to about one part in
+  10<sup>16</sup>; raise it by 3 cm and general relativity shifts its rate enough to notice.
+</p>

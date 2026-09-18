@@ -73,6 +73,11 @@ shared state, `&at=2026-12-31T23:59:30` starts the clock at a given moment,
 | 14 | **Nixie Epoch** | Unix time on Nixie tubes, counting down to 2038 |
 | 15 | **Babylon & Maya** | Sexagesimal cuneiform and the Maya Long Count |
 | 16 | **Pong** | Hours versus minutes; somebody misses on purpose |
+| 17 | **Antikythera** | A bronze gear train from 100 BC, geared down to the wall clock |
+| 18 | **Caesium Fountain** | One toss of cold atoms per second, counting out the SI definition |
+| 19 | **Penrose Mosaic** | An aperiodic tiling that inflates by φ once a minute |
+| 20 | **Prime Spiral** | Every second of the day on a Sacks spiral, primes lit |
+| 21 | **Light Clock** | Einstein's thought experiment, ticking in two frames at once |
 
 ## How it's built
 

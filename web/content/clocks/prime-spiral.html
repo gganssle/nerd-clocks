@@ -1,0 +1,41 @@
+<!--
+name: Prime Spiral
+tagline: Every second of the day on a Sacks spiral, primes lit
+category: Number theory
+order: 98
+accent: #7fb8ff
+-->
+<h2>How to read it</h2>
+<p>
+  Each of the 86 400 seconds in the day is one dot. The spiral starts at midnight in the middle
+  and winds outward; the marker rides the current second, and everything behind it is already
+  burned — so the lit region is the fraction of the day that has gone. Blue dots are prime
+  seconds, grey dots are composite, and the marker flares white-gold whenever the second count
+  itself is prime. The panel on the left factorises the current second and tells you how long
+  until the next prime one.
+</p>
+
+<h2>How it works</h2>
+<p>
+  This is a Sacks spiral, an Archimedean spiral with one full turn per perfect square:
+</p>
+<pre>r = √n     θ = 2π√n</pre>
+<p>
+  Because θ advances by exactly 2π between consecutive squares, every square lands on the ray
+  pointing straight up, and quadratic polynomials in general fall on smooth curves rather than
+  scattering. That is what makes prime-rich quadratics visible to the eye — the orange curve is
+  n² + n + 41, Euler's 1772 polynomial, which is prime for every n from 0 to 39 and still
+  produces primes at an absurd rate afterwards. Ulam's 1963 square spiral shows the same
+  diagonals; Sacks' 1994 version just makes the quadratics round.
+</p>
+
+<h2>Nerd note</h2>
+<p>
+  There are 8 403 prime seconds in a day, and the prime counting function π(n) tracks them as
+  the day goes. The crude form of the prime number theorem, n / ln n, guesses 7 601 — nearly
+  10% low. The logarithmic integral ∫₂ⁿ dt/ln t guesses 8 440, off by less than half a percent,
+  which is why li(n) is the estimate number theorists actually use. Twin primes sit back to back
+  on the spiral; the longest prime-free stretch of the day is 72 seconds. And Euler's polynomial is not luck: it is prime for 0…39 exactly because
+  the field ℚ(√−163) has class number 1, which is also why e<sup>π√163</sup> misses being a whole
+  number by less than 10<sup>−12</sup>.
+</p>
