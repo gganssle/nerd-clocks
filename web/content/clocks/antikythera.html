@@ -1,0 +1,26 @@
+<!--
+name: Antikythera
+tagline: A bronze gear train from 100 BC, geared down to the wall clock
+category: Engineering
+order: 95
+accent: #ffc878
+-->
+<h3>How to read it</h3>
+<p>Three pointers share the centre of the open zodiac ring, as on a normal clock: the slim orange needle is <b>seconds</b>, the pale needle is <b>minutes</b>, and the wide pointer carrying the little sun is the <b>hour</b>. The Greek numerals <code>Α Β Γ Δ Ε Ϛ Ζ Η Θ Ι ΙΑ ΙΒ</code> are 1 to 12. The fourth pointer, with the black-and-silver ball on its tip, is the <b>Moon</b>; the ball shows the phase, and it comes back round to the sun at each new moon.</p>
+
+<h3>How it works</h3>
+<p>Everything you can see turning is a gear ratio, not an animation curve. A wheel meshing another divides the speed by the ratio of their tooth counts and reverses it:</p>
+<div class="formula">ω₂ = −ω₁ · N₁ / N₂</div>
+<p>The motion work steps a wheel that turns once a minute down through <code>16:80</code>, <code>15:60</code> and <code>20:60</code> to the minute wheel, then through <code>12:48</code> and <code>12:36</code> to the twelve-hour wheel at the centre — 5 × 4 × 3 × 4 × 3 = 720 minutes per turn.</p>
+<p>Hanging off that same central shaft is the lunar train of the real mechanism, with its original tooth counts:</p>
+<div class="formula">64/38 × 48/24 × 127/32 = 254/19 = 13.368…</div>
+<p>254 sidereal months in 19 years is one of the numbers the Greeks actually built into the brass — and 254 − 19 = 235 synodic months, the Metonic cycle, which is why the moon phase ball works out for free from the angle between the two pointers.</p>
+
+<h3>The back dials</h3>
+<ul>
+  <li><b>Metonic</b>: a five-turn spiral divided into 235 lunar months. 19 solar years and 235 lunar months agree to within two hours, which is how ancient calendars kept months and seasons in step.</li>
+  <li><b>Saros</b>: a four-turn spiral of 223 months (18.03 years), the eclipse repeat cycle. If an eclipse happens today, another very like it happens one Saros later, shifted 120° west because 223 months is 18 years and <em>a third</em> of a day.</li>
+</ul>
+
+<h3>Nerd note</h3>
+<p>The real device, hauled out of a shipwreck off Antikythera in 1901, had about 30 surviving bronze gears cut by hand, including a 223-tooth wheel and a pin-and-slot pair that reproduces the Moon's varying speed around its elliptical orbit. Nothing of comparable mechanical complexity is known for the next <b>1,400 years</b>. The one liberty taken here is the timescale: one turn of the central wheel is twelve hours instead of a year, so the lunar train runs fast enough to watch.</p>

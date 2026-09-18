@@ -1,0 +1,41 @@
+<!--
+name: Penrose Mosaic
+tagline: An aperiodic tiling that inflates by φ once a minute
+category: Mathematics
+order: 97
+accent: #b98cff
+-->
+<h2>How to read it</h2>
+<p>
+  Three hands, none of them a hand. The <strong>hour</strong> is the rotation of the whole
+  mosaic — the gold arrow on the rim marks where noon has turned to. The <strong>minute</strong>
+  is the zoom: the tiling swells continuously by a factor of φ = 1.618 034 over sixty seconds,
+  and because inflation by φ maps the tiling onto itself, it snaps back to where it started at
+  the top of every minute without a seam. The <strong>second</strong> is the light sweeping
+  around, firing each rhombus as it passes. The digits in the middle are there for people in a hurry.
+</p>
+
+<h2>How it works</h2>
+<p>
+  The tiling is a Penrose P3, built by repeatedly deflating Robinson triangles — half-rhombi with
+  angles in multiples of 36°. Each step replaces a triangle with smaller copies of itself:
+</p>
+<pre>thin  →  1 thin  + 1 fat
+fat   →  2 fat   + 1 thin,   each φ times smaller</pre>
+<p>
+  Seven rounds of that from a ten-triangle "sun" gives the mosaic you are looking at. The tiling
+  is <em>aperiodic</em>: no translation maps it onto itself, so no patch of it ever repeats on a
+  lattice — yet any finite patch you can find does recur infinitely often elsewhere. Count the
+  rhombi and the ratio of fat to thin converges on φ, which is exactly why the tiling cannot be
+  periodic: a periodic tiling would force that ratio to be rational.
+</p>
+
+<h2>Nerd note</h2>
+<p>
+  Roger Penrose found this pair of tiles in 1974, cutting the known aperiodic set down from
+  Berger's original 20 426 tiles to two. In 1984 Dan Shechtman saw a tenfold diffraction pattern
+  in an aluminium–manganese alloy — forbidden for any crystal — and was told for years that it
+  could not exist. It was a three-dimensional Penrose tiling. He got the 2011 Nobel Prize in
+  Chemistry for it. In 2023 the hunt finished at one tile: the "hat" einstein, a single shape that
+  tiles the plane only aperiodically.
+</p>

@@ -7,7 +7,8 @@ import { join } from 'node:path';
 const [url, out, W = '1920', H = '1080', wait = '3000'] = process.argv.slice(2);
 const port = 9400 + Math.floor(Math.random() * 500);
 const prof = mkdtempSync(join(tmpdir(), 'f2c-'));
-const chrome = spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
+const bin = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const chrome = spawn(bin, [
   '--headless=new', `--user-data-dir=${prof}`, '--no-first-run', `--remote-debugging-port=${port}`,
   '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--hide-scrollbars', `--window-size=${W},${H}`, 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
