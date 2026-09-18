@@ -1,0 +1,23 @@
+<!--
+name: Julia Set
+tagline: A fractal that morphs through a full cycle every minute, steered around the edge of the Mandelbrot set
+category: Mathematics
+order: 10
+accent: #ffb86b
+-->
+<h3>How to read it</h3>
+<p>Hours and minutes are in the corner. The <b>seconds are the fractal itself</b>. The inset map shows the Mandelbrot set, and its heart-shaped main body (the <em>cardioid</em>) is used as a dial with 60 ticks. The glowing marker moves once around the cardioid per minute, and the big picture is the Julia set for whatever point the marker is on. At <code>:00</code> the marker is at the notch on the right and the shape is a fat, cauliflower-like blob. At <code>:30</code> it has reached the pinch on the left, where the set becomes a chain of pinched bubbles.</p>
+
+<h3>How it works</h3>
+<p>Both fractals come from the same one-line rule, applied to complex numbers over and over:</p>
+<div class="formula">z → z² + c</div>
+<p>For a <b>Julia set</b>, c is fixed, and each pixel is a starting value of z. If repeating the rule sends z off to infinity, the pixel is outside the set. The colour records <em>how quickly</em> it escaped, smoothed with the "normalised iteration count" <code>n + 1 − log₂(log |z|)</code> so the bands blend instead of stepping.</p>
+<p>The <b>Mandelbrot set</b> is the map of all Julia sets: it colours each value of c by whether z = 0 stays bounded. When c is inside the Mandelbrot set, its Julia set is one connected piece; outside, it shatters into dust.</p>
+
+<h3>Why the cardioid?</h3>
+<p>Points inside the main cardioid are exactly the values of c for which z² + c has an <b>attracting fixed point</b>. A fixed point <code>z*</code> has a multiplier <code>λ = 2z*</code>, and solving for c gives</p>
+<div class="formula">c = λ/2 − λ²/4</div>
+<p>Setting <code>λ = e^{iθ}</code> traces the cardioid's boundary, where the fixed point is neutral: neither attracting nor repelling. Nearby orbits rotate by the angle θ each step, which is why the Julia sets here grow θ-fold spirals and <em>p</em>-armed pinwheels whenever θ/2π is close to a simple fraction p/q. This clock uses |λ| = 0.985, just inside the edge, so every frame is still a connected set.</p>
+
+<h3>Nerd note</h3>
+<p>Every pixel runs up to 220 iterations of z² + c on your GPU, which comes to hundreds of millions of complex multiplications per second. The Mandelbrot set was first plotted in 1978–80 on line printers, as clusters of asterisks.</p>

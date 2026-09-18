@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nerd Clocks</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕰️</text></svg>">
+  <link rel="stylesheet" href="/static/app.css">
+  <script type="module" src="/static/app.js"></script>
+  <script type="module" src="/static/vendor/datastar.js"></script>
+</head>
+<body class="display"
+  data-signals="{{json .Signals}}"
+  data-init="window.nerd.configure({location: $location, solo: $solo})"
+  data-on-interval__duration.500ms="$_now = Date.now()"
+  data-on:mousemove__window__throttle.250ms="$_activeAt = Date.now()"
+  data-class:idle="$_now - $_activeAt > 4000 && !$info && !$picker"
+  {{if .Solo}}
+  data-on:keydown__window="
+    !evt.repeat && (evt.key == 'i' || evt.key == '?') && ($info = !$info, $picker = false);
+    !evt.repeat && evt.key == 'g' && ($picker = !$picker, $info = false);
+    evt.key == 'Escape' && ($info = false, $picker = false);
+    !evt.repeat && evt.key == 'f' && window.nerd.toggleFullscreen()"
+  {{else}}
+  data-on:keydown__window="
+    const k = evt.key;
+    !evt.repeat && !evt.metaKey && !evt.ctrlKey && (k == 'ArrowRight' || k == ' ' || k == 'n') && @post('/api/next');
+    !evt.repeat && !evt.metaKey && !evt.ctrlKey && (k == 'ArrowLeft' || k == 'p') && @post('/api/prev');
+    !evt.repeat && (k == 'i' || k == '?') && @post('/api/info');
+    !evt.repeat && k == 'g' && @post('/api/picker');
+    !evt.repeat && k == 'c' && @post('/api/cycle/' + ($cycle ? 0 : 120));
+    k == 'Escape' && ($info || $picker) && @post('/api/close');
+    !evt.repeat && k == 'f' && window.nerd.toggleFullscreen()"
+  {{end}}>
+
+  <main id="stage" data-effect="window.nerd.mount($clock)"></main>
+
+  {{if not .Solo}}
+  <div id="stream" hidden
+    data-init="@get('/sse', {openWhenHidden: true, retry: 'always', retryMaxCount: 1000000000, retryMaxWait: 5000})"></div>
+  {{end}}
+
+  <div class="chrome">
+    {{template "hud" .}}
+
+    <nav class="controls" aria-label="Clock controls">
+      {{if .Solo}}
+      <button data-on:click="$picker = !$picker; $info = false" title="All clocks (g)">▦</button>
+      <button data-on:click="$info = !$info; $picker = false" data-class:on="$info" title="How it works (i)">i</button>
+      {{else}}
+      <button data-on:click="@post('/api/prev')" title="Previous (←)">←</button>
+      <button data-on:click="@post('/api/picker')" data-class:on="$picker" title="All clocks (g)">▦</button>
+      <button data-on:click="@post('/api/info')" data-class:on="$info" title="How it works (i)">i</button>
+      <button data-on:click="@post('/api/cycle/' + ($cycle ? 0 : 120))" data-class:on="$cycle > 0" title="Auto-cycle every 2 minutes (c)">⟳</button>
+      <button data-on:click="@post('/api/next')" title="Next (→)">→</button>
+      {{end}}
+      <button data-on:click="window.nerd.toggleFullscreen()" title="Fullscreen (f)">⛶</button>
+    </nav>
+
+    <div class="cycle-bar" data-show="$cycle > 0">
+      <div data-style:width="Math.max(0, Math.min(100, 100 - 100 * ($cycleEndsAt - $_now) / ($cycle * 1000))) + '%'"></div>
+    </div>
+  </div>
+
+  <aside id="info" data-class:open="$info" aria-live="polite">
+    <button class="close" data-on:click="{{if .Solo}}$info = false{{else}}@post('/api/close'){{end}}" aria-label="Close">×</button>
+    {{template "info-body" .}}
+  </aside>
+
+  <section id="picker" data-class:open="$picker">
+    <header>
+      <h2>Nerd Clocks</h2>
+      <p>{{.Total}} ways to tell the time. Pick one, or open <b>/remote</b> on your phone to drive this screen from across the room.</p>
+      <button class="close" data-on:click="{{if .Solo}}$picker = false{{else}}@post('/api/close'){{end}}" aria-label="Close">×</button>
+    </header>
+    <div class="grid">
+      {{range $i, $c := .Clocks}}
+      <button class="card" style="--accent: {{$c.Accent}}"
+        data-class:active="$clock == '{{$c.ID}}'"
+        {{if $.Solo}}data-on:click="window.location.search = '?clock={{$c.ID}}'"{{else}}data-on:click="@post('/api/select/{{$c.ID}}')"{{end}}>
+        <span class="card-num">{{printf "%02d" (inc $i)}}</span>
+        <span class="card-cat">{{$c.Category}}</span>
+        <span class="card-name">{{$c.Name}}</span>
+        <span class="card-tag">{{$c.Tagline}}</span>
+      </button>
+      {{end}}
+    </div>
+    <footer><kbd>←</kbd><kbd>→</kbd> switch · <kbd>i</kbd> how it works · <kbd>g</kbd> this grid · <kbd>c</kbd> auto-cycle · <kbd>f</kbd> fullscreen</footer>
+  </section>
+</body>
+</html>

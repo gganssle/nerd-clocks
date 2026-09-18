@@ -1,0 +1,30 @@
+<!--
+name: Game of Life
+tagline: The time stamped into Conway's cellular automaton while life boils around it
+category: Emergence
+order: 60
+accent: #8dffd6
+-->
+<h3>How to read it</h3>
+<p>The glowing mint cells spell out the hours and minutes, with the seconds underneath. Everything else is a live <b>Game of Life</b> running at 14 generations per second. When a digit changes, the cells it gives up are released into the simulation and burst apart, so every second leaves a small explosion behind. The line along the bottom fills once a minute.</p>
+
+<h3>The rules</h3>
+<p>Each cell is alive or dead and looks at its eight neighbours. Every generation, all cells update at once:</p>
+<div class="formula">B3/S23
+dead  + exactly 3 live neighbours  → born
+alive + 2 or 3 live neighbours     → survives
+anything else                      → dies (loneliness or overcrowding)</div>
+<p>Colour shows age: newborn cells are white-gold and cool through magenta to deep blue as they survive generation after generation, which is why long-lived <b>still lifes</b> (blocks, beehives) end up blue. Dead cells leave a fading heat trail.</p>
+
+<h3>What to look for</h3>
+<ul>
+  <li><b>Oscillators</b> such as blinkers (period 2) flipping in place.</li>
+  <li><b>Gliders</b>: five cells that rebuild themselves one cell diagonally every four generations. They are how information moves in Life.</li>
+  <li><b>Methuselahs</b> such as the R-pentomino and acorn, which are occasionally dropped in to keep the soup going. The R-pentomino has only 5 cells but takes 1,103 generations to settle down.</li>
+</ul>
+
+<h3>Why the digits act like walls</h3>
+<p>The digit cells are pinned alive and surrounded by a one-cell <b>moat</b> of cells pinned dead. From outside, a neighbour in the moat always counts as dead, so the soup never feels the digits at all. Anything that crashes into them is simply absorbed, while the digits themselves stay perfectly still.</p>
+
+<h3>Nerd note</h3>
+<p>John Conway devised Life in 1970 and it appeared in Martin Gardner's <em>Scientific American</em> column. From these four rules you can build logic gates out of glider streams, and from those a <b>universal Turing machine</b>. People have even built a working digital clock, and Tetris, inside Life itself. The grid here is a torus: gliders leaving one edge reappear on the opposite side.</p>

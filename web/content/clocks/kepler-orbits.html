@@ -1,0 +1,27 @@
+<!--
+name: Kepler Orbits
+tagline: Clock hands that obey the laws of planetary motion, speeding up near the star
+category: Astronomy
+order: 90
+accent: #ffb347
+-->
+<h3>How to read it</h3>
+<p>The <b>amber planet</b> is the hour hand; read it against the amber numerals 1 to 12 on the big orbit. The <b>blue planet</b> is the minute hand, read against the minute marks 00 to 55 on the inner orbit. The small <b>violet moon</b> circling the blue planet completes one lap per minute and marks the seconds. Every body passes <b>periapsis</b>, its closest point to the star, at the top of its cycle: 12 o'clock, :00 minutes, :00 seconds.</p>
+<p>The dial marks are <b>not</b> evenly spaced. They crowd together far from the star and spread out near it, because that is where the planets really slow down and speed up.</p>
+
+<h3>Kepler's three laws (1609–1619)</h3>
+<ol>
+  <li><b>Orbits are ellipses</b> with the star at one <b>focus</b>, not the centre. The other focus is empty; it is marked with a small cross.</li>
+  <li><b>Equal areas in equal times.</b> The line from star to planet sweeps out equal areas in equal intervals. Each coloured wedge here covers one hour (or five minutes), and every wedge has the same <em>area</em>: short and fat near the star, long and thin far away.</li>
+  <li><b>T² ∝ a³.</b> The square of the period grows as the cube of the orbit's size. A planet four times farther out takes eight times longer to go around.</li>
+</ol>
+
+<h3>How it's computed</h3>
+<p>Time gives the <b>mean anomaly</b> M, an angle that grows perfectly steadily. Kepler's equation turns it into the <b>eccentric anomaly</b> E, solved each frame with a few Newton iterations, and E gives the position on the ellipse:</p>
+<div class="formula">M = 2π · t / T
+M = E − e · sin E
+x = a (cos E − e),  y = a √(1 − e²) sin E</div>
+<p>There is no closed-form solution for E. Kepler himself solved it by trial and error, and the problem has been a favourite testbed for numerical methods ever since.</p>
+
+<h3>Real eccentricities</h3>
+<p>These orbits are stretched for drama (e = 0.40, 0.30, 0.25). Earth's orbit has e = <b>0.017</b>, practically a circle; even so, we are 5 million km closer to the Sun in January than in July. Mercury has e = <b>0.206</b>, Pluto <b>0.249</b>, and Halley's Comet <b>0.967</b>: it moves about 60 times faster at perihelion than at aphelion.</p>

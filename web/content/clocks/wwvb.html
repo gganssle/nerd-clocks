@@ -1,0 +1,26 @@
+<!--
+name: WWVB Time Signal
+tagline: The 60 kHz radio code that sets every "atomic" wall clock in North America
+category: Radio
+order: 110
+accent: #ffb640
+-->
+<h3>How to read it</h3>
+<p>The green trace is the carrier from station WWVB in Fort Collins, Colorado, scrolling past like an oscilloscope. At the start of <b>every second</b> the transmitter drops its power by 17&nbsp;dB, and how long it stays low carries one symbol:</p>
+<ul>
+  <li><b>0.2 s</b> low = binary <code>0</code></li>
+  <li><b>0.5 s</b> low = binary <code>1</code></li>
+  <li><b>0.8 s</b> low = <b>marker</b>, sent at seconds 0, 9, 19, 29, 39, 49 and 59</li>
+</ul>
+<p>The grid holds the 60-second frame for the current minute, filling in as each symbol arrives. The colored fields are decoded below the moment their last bit lands: minute, hour, day of year, the UT1 correction, year, and flags.</p>
+
+<h3>How it works</h3>
+<p>Values are sent in <b>binary-coded decimal</b>: each decimal digit gets its own group of bits. Minute 42 is <code>40</code> + <code>2</code>, so the bits weighted 40 and 2 are set. Some positions are always zero to separate digit groups.</p>
+<p>Two markers in a row (second 59, then second 0) tell the receiver a new minute has begun. The frame describes the UTC time <b>at the start of that minute</b>, so a receiver that locks on at second 0 already knows the time and needs only its own crystal to count the seconds.</p>
+<p>The flag bits carry a leap-year indicator, a leap-second warning, and two daylight-saving bits: bit 57 flips at 00:00&nbsp;UTC on the day DST starts or ends, and bit 58 follows 24 hours later. Every "atomic" clock in the US can therefore change its hour at 2&nbsp;a.m. local time, whatever its time zone.</p>
+
+<h3>Why it syncs at night</h3>
+<p>A 60&nbsp;kHz wave is 5&nbsp;km long. By day it creeps along the ground; at night the ionosphere's absorbing D layer disappears and the signal bounces off higher layers, reaching most of North America. That is why radio-controlled clocks try to sync around 2&nbsp;a.m.</p>
+
+<h3>Nerd note</h3>
+<p>Since 2012 WWVB also phase-modulates the carrier (a 180° flip is a 1). Receivers built for the phase code lock far more reliably in noisy offices, and it includes a 106-bit sync word. The old amplitude code shown here still runs on top of it, so the cheap clock on your wall keeps working. The DUT1 value shown is approximate. The real one is published by the IERS.</p>

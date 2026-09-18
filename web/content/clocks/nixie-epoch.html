@@ -1,0 +1,23 @@
+<!--
+name: Nixie Epoch
+tagline: Unix time glowing in neon, counting down to the day 32-bit clocks overflow
+category: Computing
+order: 140
+accent: #ff8a3d
+-->
+<h3>How to read it</h3>
+<p>The big tubes show <b>Unix time</b>: the number of seconds since midnight UTC on 1 January 1970, the moment computers everywhere count from. The lamps below show the same number in <b>32-bit binary</b>, the leftmost lamp being the sign bit, and the cyan display shows it in <b>hexadecimal</b>. Your local time is on the small tubes.</p>
+
+<h3>The Year 2038 problem</h3>
+<p>For decades Unix systems stored time in a <code>time_t</code> that was a <b>signed 32-bit integer</b>. Its largest value is 2<sup>31</sup> − 1 = 2,147,483,647, which is <b>03:14:07 UTC on 19 January 2038</b>. One second later the sign bit flips, the number wraps to −2,147,483,648, and a naive clock jumps back to December 1901.</p>
+<div class="formula">0x7FFFFFFF + 1 → 0x80000000 → 1901-12-13 20:45:52</div>
+<p>Modern 64-bit systems moved on long ago; a 64-bit <code>time_t</code> lasts about 292 billion years. The risk lives on in embedded devices, file formats and database columns that still pack time into 32 bits. Watch the sign lamp: when it lights, that is the moment.</p>
+
+<h3>Things Unix time ignores</h3>
+<p>Unix time pretends every day has exactly 86,400 seconds. The 27 leap seconds added since 1972 simply are not counted: during a leap second the timestamp repeats or stalls. That keeps date math simple but means Unix time is not a true count of elapsed SI seconds.</p>
+
+<h3>How a Nixie tube works</h3>
+<p>Each tube holds ten wire cathodes shaped like digits, stacked one behind another, inside a glass envelope of low-pressure neon. A honeycomb mesh anode sits in front. Put about <b>170 V</b> across the anode and one cathode, and the gas ionizes into a <b>cold-cathode glow discharge</b> that wraps that digit in orange light. The unlit digits stay visible behind it as faint wires, which is why each number sits at a slightly different depth.</p>
+
+<h3>Nerd note</h3>
+<p>Nixies were made from the mid-1950s until LEDs replaced them in the 1970s. The name probably comes from a Burroughs draftsman's label "NIX I", for "Numeric Indicator eXperimental No. 1". The next round-number moment is shown under the countdown: 1,800,000,000 arrives on 15 January 2027.</p>

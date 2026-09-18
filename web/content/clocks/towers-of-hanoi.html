@@ -1,0 +1,25 @@
+<!--
+name: Towers of Hanoi
+tagline: A 16-disk puzzle solved in 65,535 moves, exactly one day long
+category: Algorithms
+order: 80
+accent: #ff8fb1
+-->
+<h3>How to read it</h3>
+<p>At midnight all 16 disks sit on peg <b>A</b>. By the next midnight they have all moved to peg <b>C</b>, one disk at a time, never putting a bigger disk on a smaller one. The optimal solution takes <b>65,535</b> moves, so one move happens about every <b>1.318 seconds</b>, and the move number tells you how far through the day you are.</p>
+<p>The biggest disk moves exactly once, halfway through the solution, so it lands on peg C at <b>12:00:00 noon</b>. The second-biggest moves at 6:00 and 18:00, and so on down.</p>
+
+<h3>How it works</h3>
+<p>The recursive solution moves n disks from A to C like this: move n−1 disks out of the way to B, move the biggest disk to C, then move the n−1 disks from B onto it. That gives</p>
+<div class="formula">moves(n) = 2·moves(n−1) + 1 = 2ⁿ − 1</div>
+<p>and 2ⁿ − 1 is also the minimum: the biggest disk has to move at least once, and each time it does, every other disk has to be stacked on one other peg.</p>
+
+<h3>The binary connection</h3>
+<ul>
+  <li>On move <b>m</b>, the disk that moves is given by the number of <b>trailing zero bits</b> of m. Disk 1 moves on every odd move, disk 2 on every move divisible by 2 but not 4, and so on.</li>
+  <li>Each disk always travels in the same direction around the three pegs, so its position is just (moves so far × direction) mod 3. This clock computes the whole tower directly from the move number, with no replay.</li>
+  <li>The <b>Gray code</b> row (k XOR k≫1) changes exactly one bit per move, and bit i flips precisely when disk i moves. The highlighted bit is the disk in motion.</li>
+</ul>
+
+<h3>Nerd note</h3>
+<p>Édouard Lucas published the puzzle in 1883 with a legend: priests in a temple move 64 golden disks, and when they finish, the world ends. At one move per second, 2⁶⁴ − 1 moves take about <b>585 billion years</b>, roughly 42 times the current age of the universe.</p>

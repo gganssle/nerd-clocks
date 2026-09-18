@@ -1,0 +1,28 @@
+{{define "hud"}}
+<div id="hud" style="--accent: {{.Current.Accent}}">
+  <div class="hud-meta"><span class="hud-index">{{printf "%02d" (inc .Index)}}<span class="dim"> / {{printf "%02d" .Total}}</span></span><span class="hud-cat">{{.Current.Category}}</span></div>
+  <h1 class="hud-name">{{.Current.Name}}</h1>
+  <p class="hud-tagline">{{.Current.Tagline}}</p>
+</div>
+{{end}}
+
+{{define "info-body"}}
+<div id="info-body" style="--accent: {{.Current.Accent}}">
+  <div class="info-kicker">{{.Current.Category}} · How it works</div>
+  <h2>{{.Current.Name}}</h2>
+  <p class="info-tagline">{{.Current.Tagline}}</p>
+  <div class="prose">{{.Current.Body}}</div>
+</div>
+{{end}}
+
+{{define "remote-now"}}
+<section id="remote-now" style="--accent: {{.Current.Accent}}">
+  <div class="kicker">Now showing · {{printf "%02d" (inc .Index)}} / {{printf "%02d" .Total}}</div>
+  <h1>{{.Current.Name}}</h1>
+  <p>{{.Current.Tagline}}</p>
+</section>
+{{end}}
+
+{{define "remote-info"}}
+<div id="remote-info" class="prose" style="--accent: {{.Current.Accent}}">{{.Current.Body}}</div>
+{{end}}

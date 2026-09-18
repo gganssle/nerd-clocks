@@ -1,0 +1,19 @@
+<!--
+name: Fourier Epicycles
+tagline: 320 spinning circles, stacked end to end, draw the time in a single continuous line
+category: Mathematics
+order: 120
+accent: #8fb8ff
+-->
+<h3>How to read it</h3>
+<p>The glowing line spells out the current time, <b>HH:MM</b>. It is drawn by one pen at the tip of a chain of rotating arrows: each arrow spins at a fixed whole-number speed and is pinned to the tip of the one before. The pen goes around the whole drawing once every 10 seconds. When the minute changes, the circles smoothly re-tune themselves to the new digits. The ruler underneath counts off the seconds.</p>
+
+<h3>How it works</h3>
+<p>The digits are joined into <b>one closed loop</b> (the faint lines are where the pen travels between strokes), and 1,024 evenly spaced points are sampled along it. Each point is treated as a complex number <code>x + iy</code>. A <b>discrete Fourier transform</b> rewrites that list of points as 1,024 rotating vectors:</p>
+<div class="formula">c_k = (1/N) Σ z_n · e^(−2πi·k·n/N)
+z(t) = Σ c_k · e^(2πi·k·t)</div>
+<p>Each coefficient <code>c_k</code> is one arrow. Its length and starting angle are |c_k| and arg(c_k), and it turns k times per lap, clockwise for negative k. Adding them tip to tail reproduces the curve exactly.</p>
+<p>Most of the shape lives in the few largest arrows, so the clock sorts them by length and draws only the top 320. That is enough to trace sharp digits. With fewer terms the corners round off and wobble (the <b>Gibbs phenomenon</b>).</p>
+
+<h3>Nerd note</h3>
+<p>Ptolemy's astronomers modelled planetary motion with circles riding on circles for about 1,400 years. They were doing Fourier analysis without knowing it: with enough epicycles you can fit <em>any</em> closed orbit, which is why the model was so hard to disprove. In 1883, Giovanni Schiaparelli showed that epicycles can reproduce essentially any periodic motion.</p>

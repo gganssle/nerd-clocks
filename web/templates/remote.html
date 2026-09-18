@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07080c">
+  <title>Nerd Clocks · Remote</title>
+  <link rel="stylesheet" href="/static/app.css">
+  <script type="module" src="/static/vendor/datastar.js"></script>
+</head>
+<body class="remote" data-signals="{{json .Signals}}">
+  <div hidden data-init="@get('/sse?view=remote', {openWhenHidden: true, retry: 'always', retryMaxCount: 1000000000, retryMaxWait: 5000})"></div>
+
+  {{template "remote-now" .}}
+
+  <div class="remote-buttons">
+    <button data-on:click="@post('/api/prev')">← Prev</button>
+    <button data-on:click="@post('/api/info')" data-class:on="$info">Explain on screen</button>
+    <button data-on:click="@post('/api/next')">Next →</button>
+  </div>
+
+  <div class="remote-cycle">
+    <span>Auto-cycle</span>
+    {{range $s := (seq 0 30 120 600)}}
+    <button data-on:click="@post('/api/cycle/{{$s}}')" data-class:on="$cycle == {{$s}}">{{if eq $s 0}}off{{else if lt $s 60}}{{$s}}s{{else}}{{div $s 60}}m{{end}}</button>
+    {{end}}
+  </div>
+
+  <details class="remote-details">
+    <summary>How this clock works</summary>
+    {{template "remote-info" .}}
+  </details>
+
+  <ol class="remote-list">
+    {{range $i, $c := .Clocks}}
+    <li><button style="--accent: {{$c.Accent}}" data-class:active="$clock == '{{$c.ID}}'" data-on:click="@post('/api/select/{{$c.ID}}')">
+      <span class="num">{{printf "%02d" (inc $i)}}</span>
+      <span class="txt"><b>{{$c.Name}}</b><small>{{$c.Tagline}}</small></span>
+    </button></li>
+    {{end}}
+  </ol>
+</body>
+</html>

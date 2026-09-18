@@ -1,0 +1,25 @@
+<!--
+name: Pendulum Wave
+tagline: Eighteen pendulums tuned to fall back into step exactly once a minute
+category: Physics
+order: 20
+accent: #7fd4ff
+-->
+<h3>How to read it</h3>
+<p>The big numbers are hours and minutes. The <b>seconds are the pattern</b>: at <code>:00</code> every bob hangs in a single straight line. Watch the line twist into a travelling snake, split into two and three interleaved rows, dissolve into apparent chaos around <code>:30</code>, and then reassemble itself just in time for the next minute.</p>
+
+<h3>How it works</h3>
+<p>A pendulum's period depends only on its length (for small swings), not on the mass of the bob:</p>
+<div class="formula">T = 2π √(L / g)</div>
+<p>The longest pendulum here makes exactly <b>51</b> swings per minute, the next <b>52</b>, and so on up to <b>68</b>. Solving for the length gives each one a precise size: from about 34.4&nbsp;cm down to 19.3&nbsp;cm.</p>
+<p>Because every pendulum completes a <em>whole number</em> of swings in 60 seconds, all of them are back where they started at the end of each minute. In between, neighbouring pendulums drift out of phase by 1/60 of a cycle per second, which is what draws the waves.</p>
+
+<h3>Why the patterns appear</h3>
+<ul>
+  <li>At <b>t = 60/k</b> seconds, every k-th pendulum lines up again, so you see <b>k</b> interleaved snakes. At 30&nbsp;s you get two rows swinging in opposition, at 20&nbsp;s three, at 15&nbsp;s four.</li>
+  <li>This is the same effect as <b>aliasing</b> in digital sampling and <b>moiré</b> patterns: you are sampling a smooth phase gradient at 18 discrete points.</li>
+  <li>The bobs are completely uncoupled; no pendulum influences another. All the apparent choreography is pure arithmetic.</li>
+</ul>
+
+<h3>Nerd note</h3>
+<p>Real pendulum-wave demos slowly fall out of step because the simple formula ignores air drag and the fact that the period grows with swing amplitude (by about 1% at 23°). This one is computed from the wall clock, so it never drifts.</p>

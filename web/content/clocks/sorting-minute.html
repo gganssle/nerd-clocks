@@ -1,0 +1,29 @@
+<!--
+name: Sorting Minute
+tagline: Every minute, a fresh shuffle sorted by a different algorithm, finishing at :55
+category: Algorithms
+order: 130
+accent: #c69bff
+-->
+<h3>How to read it</h3>
+<p>The centre shows hours and minutes. The <b>seconds are the sort itself</b>: at <code>:00</code> the 96 coloured bars scatter into a random shuffle, the algorithm named in the middle works through it, and at <code>:55</code> it finishes as a perfect colour wheel spiral. A white sweep then checks the result before the next minute's shuffle. The tick ring around the outside counts off the seconds too.</p>
+<p>Bright caps flash on elements being <b>compared</b>; bars that turn pale are being <b>swapped or written</b>.</p>
+
+<h3>How it works</h3>
+<p>Each minute's shuffle comes from a seeded random number generator, so the same minute always produces the same puzzle. The algorithm runs instantly when the minute starts and records every compare, swap and write into a trace. The clock then replays that trace at whatever speed makes it end at :55. Selection sort needs about 4,600 steps on 96 items; radix sort needs 768.</p>
+<ul>
+  <li><b>Quicksort</b> picks a pivot, partitions the rest around it, and recurses. It averages O(n log n) but can degrade to O(n²).</li>
+  <li><b>Merge sort</b> splits the array, sorts the halves, and merges them. It is always O(n log n) and <b>stable</b>, meaning equal keys keep their original order.</li>
+  <li><b>Heapsort</b> builds a max-heap inside the array, then repeatedly moves the root to the end. It is O(n log n) and needs no extra memory.</li>
+  <li><b>Shell sort</b> does insertion sort over shrinking gaps (57, 23, 10, 4, 1), so far-away elements travel quickly.</li>
+  <li><b>Cocktail shaker, insertion and selection sort</b> are O(n²): easy to follow, with many more steps.</li>
+  <li><b>Radix sort (LSD)</b> never compares two elements. It deals values into buckets by one base-4 digit at a time, least significant first, relying on each pass being stable.</li>
+</ul>
+
+<h3>Why n log n is a wall</h3>
+<p>A comparison sort learns one bit per comparison. There are n! possible orderings to tell apart, so any comparison sort needs at least</p>
+<div class="formula">log₂(n!) ≈ n log₂ n − 1.44 n   comparisons</div>
+<p>in the worst case: about 499 for these 96 bars. Radix sort gets around this bound by inspecting the digits of the keys directly instead of comparing them.</p>
+
+<h3>Nerd note</h3>
+<p>Real libraries use hybrids. Python's Timsort merges naturally occurring runs, and C++'s <code>std::sort</code> is usually introsort: quicksort that falls back to heapsort if it goes quadratic, and to insertion sort on tiny ranges.</p>

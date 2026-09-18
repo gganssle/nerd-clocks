@@ -1,0 +1,19 @@
+<!--
+name: Pong
+tagline: Two AI players keep time: the left score is the hour, the right score the minute
+category: Games
+order: 160
+accent: #9dffc0
+-->
+<h3>How to read it</h3>
+<p>The <b>left score is the hour</b> and the <b>right score is the minute</b>. The two paddles rally all minute long, and exactly as the seconds roll over to <code>:00</code> the left player misses, giving the right player a point. At the top of the hour the right player misses instead, the hour goes up, and the minutes reset.</p>
+
+<h3>How the misses are scheduled</h3>
+<p>A real Pong game can't promise a goal at a given moment, so this clock plans each rally in advance. The trick is to <b>unfold the bounces</b>: a ball bouncing between two walls moves exactly like a ball flying straight through an endless row of mirror-image courts. That turns the horizontal motion into one straight line:</p>
+<div class="formula">distance = (centre → far paddle) + 2m × (court width) + (far paddle → goal)
+speed    = distance / 59 s</div>
+<p>The clock picks the number of volleys <b>m</b> that gives a comfortable speed (about one crossing every 1.25&nbsp;s), then solves for the exact speed that puts the ball over the goal line on the minute boundary. The vertical motion is folded the same way off the top and bottom walls. Each paddle knows where the ball will arrive, glides there, and hits it off-centre to set a new angle, as on the original Pong's segmented paddle. On the last volley the losing paddle stops just short.</p>
+<p>Ball and paddle positions are pure functions of the time, so the game never drifts, and reloading the page mid-rally shows exactly the same shot.</p>
+
+<h3>Nerd note</h3>
+<p>Atari's <b>Pong</b> (1972) was built by Allan Alcorn as a training exercise from Nolan Bushnell's brief. It had <b>no CPU and no software</b>: the game was about 66 TTL chips of counters, flip-flops and gates driving the TV signal directly. The paddle was split into eight segments that sent the ball off at different angles, and a hardware quirk kept the paddles from reaching the very top of the screen. The first prototype, in Andy Capp's Tavern in Sunnyvale, reportedly stopped working because its coin box overflowed with quarters.</p>
