@@ -49,7 +49,12 @@ export function create(host) {
   };
 
   function build(W, H) {
-    const S = (Math.min(W, H) * 0.455) / Math.sqrt(DAY);
+    // Tall screens shrink the spiral so it clears the readouts above and below.
+    const R = Math.min(W, H);
+    const rad = W < H * 1.25
+      ? Math.max(W * 0.2, Math.min(W * 0.455, H * 0.5 - R * 0.24))
+      : R * 0.455;
+    const S = rad / Math.sqrt(DAY);
     const mk = () => {
       const c = document.createElement('canvas');
       c.width = W; c.height = H;
