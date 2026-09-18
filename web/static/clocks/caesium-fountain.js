@@ -128,10 +128,15 @@ export function create(host) {
       }
       ctx.fillStyle = 'rgba(180, 205, 245, 0.6)';
       ctx.font = `${Math.max(10, R * 0.016)}px ${MONO}`;
-      ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.textAlign = 'right';
-      ctx.fillText('Ramsey cavity · 9.192 631 770 GHz', cx - cavW * 1.15, cavityY);
+      // Wide: the label sits to the left of the cavity. Narrow: above it.
+      if (W > H * 1.25) {
+        ctx.textAlign = 'right';
+        ctx.fillText('Ramsey cavity · 9.192 631 770 GHz', cx - cavW * 1.15, cavityY);
+      } else {
+        ctx.textAlign = 'center';
+        ctx.fillText('Ramsey cavity · 9.192 631 770 GHz', cx, cavityY - cavH * 1.6);
+      }
 
       // ---- trap and cooling beams -----------------------------------------
       const launching = u < 0.06;
@@ -310,8 +315,10 @@ export function create(host) {
         ctx.fillText(`toss ${mod(Math.floor(t.secOfDay), 86400)} of 86 400 today`, bx, H * 0.83);
         ctx.fillText('fountain accuracy ≈ 1 s in 300 000 000 years', bx, H * 0.86);
       } else {
-        ctx.textAlign = 'center';
-        ctx.fillText(label, cx, H * 0.35);
+        // No room beside the tube: the digits go under everything.
+        ctx.font = `200 ${Math.min(R * 0.075, W * 0.13)}px ${SANS}`;
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(label, R * 0.04, H - R * 0.02);
       }
     },
   };

@@ -143,13 +143,15 @@ export function create(host) {
 
       // ---- readouts --------------------------------------------------------
       const m = R * 0.05;
+      const narrow = W < H * 1.25;
+      const note = Math.max(10, Math.min(R * 0.021, W * 0.023));
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      ctx.font = `200 ${Math.min(R * 0.11, W * 0.17)}px ${SANS}`;
+      ctx.font = `200 ${Math.min(R * 0.11, W * 0.12)}px ${SANS}`;
       ctx.fillStyle = 'rgba(232, 242, 255, 0.96)';
       ctx.fillText(`${pad(t.h)}:${pad(t.m)}:${pad(t.s)}`, m, m);
 
-      ctx.font = `${Math.max(11, R * 0.021)}px ${MONO}`;
+      ctx.font = `${note}px ${MONO}`;
       const fs = factor(n);
       const line = prime ? `${n.toLocaleString()} is PRIME` : `${n.toLocaleString()} = ${fmt(fs) || '0'}`;
       ctx.fillStyle = prime ? 'rgba(255, 228, 160, 0.95)' : 'rgba(150, 185, 235, 0.8)';
@@ -164,14 +166,17 @@ export function create(host) {
         m, m + R * 0.185,
       );
 
+      // Narrow screens have no room beside the digits, so the legend drops
+      // to the bottom right.
+      const capY = narrow ? H - m - note * 6.8 : m;
       ctx.textAlign = 'right';
       ctx.fillStyle = 'rgba(140, 175, 225, 0.6)';
-      ctx.fillText('Sacks spiral · r = √n, θ = 2π√n', W - m, m);
-      ctx.fillText('squares fall on the ray straight up', W - m, m + R * 0.028);
+      ctx.fillText('Sacks spiral · r = √n, θ = 2π√n', W - m, capY);
+      ctx.fillText('squares fall on the ray straight up', W - m, capY + note * 1.35);
       ctx.fillStyle = 'rgba(120, 190, 255, 0.75)';
-      ctx.fillText(`${pi[DAY].toLocaleString()} prime seconds in a day`, W - m, m + R * 0.062);
+      ctx.fillText(`${pi[DAY].toLocaleString()} prime seconds in a day`, W - m, capY + note * 2.9);
       ctx.fillStyle = 'rgba(255, 160, 100, 0.8)';
-      ctx.fillText('orange: n² + n + 41, Euler\u2019s prime machine', W - m, m + R * 0.09);
+      ctx.fillText('orange: n² + n + 41, Euler\u2019s prime machine', W - m, capY + note * 4.25);
 
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';

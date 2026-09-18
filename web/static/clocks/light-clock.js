@@ -53,56 +53,60 @@ export function create(host) {
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 
-      const boxH = R * 0.36;                 // mirror separation: one light-second
-      const boxW = R * 0.16;
-      const topY = H * 0.11, botY = topY + boxH;
-      const labX = W * 0.2;
+      // Wide: the two clocks sit side by side. Narrow: they stack.
+      const narrow = W < H * 1.25;
+      const boxH = narrow ? H * 0.2 : R * 0.36;   // mirror separation: 1 light-second
+      const boxW = narrow ? Math.min(W * 0.17, boxH * 0.5) : R * 0.16;
+      const labTop = narrow ? H * 0.05 : H * 0.11, labBot = labTop + boxH;
+      const rocTop = narrow ? H * 0.34 : labTop, rocBot = rocTop + boxH;
+      const labX = narrow ? W * 0.3 : W * 0.2;
+      const note = Math.max(10, Math.min(R * 0.02, W * 0.021));
 
       // ---- lab frame clock -------------------------------------------------
       // One round trip per second. Proper time here is coordinate time.
       const labP = t.secondFrac;
-      const labY = botY - tri(labP) * boxH;
+      const labY = labBot - tri(labP) * boxH;
       const up = (labP % 1) < 0.5;
       ctx.strokeStyle = 'rgba(120, 170, 235, 0.22)';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(labX - boxW, topY); ctx.lineTo(labX - boxW, botY);
-      ctx.moveTo(labX + boxW, topY); ctx.lineTo(labX + boxW, botY);
+      ctx.moveTo(labX - boxW, labTop); ctx.lineTo(labX - boxW, labBot);
+      ctx.moveTo(labX + boxW, labTop); ctx.lineTo(labX + boxW, labBot);
       ctx.stroke();
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
       ctx.strokeStyle = 'rgba(120, 200, 255, 0.35)';
       ctx.lineWidth = Math.max(1.5, R * 0.0035);
-      ctx.beginPath(); ctx.moveTo(labX, up ? botY : topY); ctx.lineTo(labX, labY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(labX, up ? labBot : labTop); ctx.lineTo(labX, labY); ctx.stroke();
       ctx.restore();
-      mirror(labX - boxW, labX + boxW, topY, labY < topY + boxH * 0.06);
-      mirror(labX - boxW, labX + boxW, botY, labY > botY - boxH * 0.06);
+      mirror(labX - boxW, labX + boxW, labTop, labY < labTop + boxH * 0.06);
+      mirror(labX - boxW, labX + boxW, labBot, labY > labBot - boxH * 0.06);
       photon(labX, labY, Math.max(2.5, R * 0.006), 200);
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.font = `${Math.max(11, R * 0.02)}px ${MONO}`;
+      ctx.font = `${note}px ${MONO}`;
       ctx.fillStyle = 'rgba(180, 215, 255, 0.85)';
-      ctx.fillText('lab frame · β = 0', labX, botY + R * 0.035);
+      ctx.fillText('lab frame · β = 0', labX, labBot + note * 1.4);
       ctx.fillStyle = 'rgba(140, 180, 235, 0.6)';
-      ctx.fillText('one bounce up and back = 1 s', labX, botY + R * 0.065);
+      ctx.fillText('one bounce up and back = 1 s', labX, labBot + note * 2.8);
 
       // ---- moving clock ----------------------------------------------------
       // Same photon, same speed c, longer path: the clock drifts right while
       // the light crosses, so each tick takes γ times as long.
       // The mirrors are one light-second apart, so boxH pixels = c · 1 s: the
       // box slides β · boxH pixels per lab second and the photon rides with it.
-      const rocketX = W * 0.68;
-      const span = Math.min(W * 0.34, boxH * 2.2);
+      const rocketX = narrow ? W * 0.5 : W * 0.68;
+      const span = narrow ? W * 0.5 : Math.min(W * 0.34, boxH * 2.2);
       const labT = t.secOfDay;
       const px = rocketX + (((labT * beta * boxH) % span) - span / 2);
       const prop = (labT / gamma) % 1;               // the rocket's proper time
-      const movY = botY - tri(prop) * boxH;
+      const movY = rocBot - tri(prop) * boxH;
 
       // the zig-zag the lab sees: the photon's actual path through space
       ctx.save();
       ctx.beginPath();
-      ctx.rect(rocketX - span * 0.75, topY - R * 0.03, span * 1.5, boxH + R * 0.06);
+      ctx.rect(rocketX - span * 0.75, rocTop - R * 0.03, span * 1.5, boxH + R * 0.06);
       ctx.clip();
       ctx.strokeStyle = 'rgba(255, 170, 110, 0.30)';
       ctx.setLineDash([5, 7]);
@@ -111,7 +115,7 @@ export function create(host) {
       for (let i = 0; i <= 80; i++) {
         const dt = (-1.5 + (i / 80) * 3) * gamma;    // ± one and a half ticks
         const x = px + dt * beta * boxH;
-        const y = botY - tri((labT + dt) / gamma) * boxH;
+        const y = rocBot - tri((labT + dt) / gamma) * boxH;
         i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
       }
       ctx.stroke();
@@ -121,22 +125,24 @@ export function create(host) {
       ctx.strokeStyle = 'rgba(160, 200, 255, 0.18)';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(px - boxW, topY); ctx.lineTo(px - boxW, botY);
-      ctx.moveTo(px + boxW, topY); ctx.lineTo(px + boxW, botY);
+      ctx.moveTo(px - boxW, rocTop); ctx.lineTo(px - boxW, rocBot);
+      ctx.moveTo(px + boxW, rocTop); ctx.lineTo(px + boxW, rocBot);
       ctx.stroke();
-      mirror(px - boxW, px + boxW, topY, movY < topY + boxH * 0.06);
-      mirror(px - boxW, px + boxW, botY, movY > botY - boxH * 0.06);
+      mirror(px - boxW, px + boxW, rocTop, movY < rocTop + boxH * 0.06);
+      mirror(px - boxW, px + boxW, rocBot, movY > rocBot - boxH * 0.06);
       photon(px, movY, Math.max(2.5, R * 0.006), 32);
 
       ctx.textAlign = 'center';
       ctx.fillStyle = 'rgba(255, 205, 150, 0.9)';
-      ctx.font = `${Math.max(11, R * 0.02)}px ${MONO}`;
-      ctx.fillText(`rocket frame · β = ${beta.toFixed(3)} c`, rocketX, botY + R * 0.035);
+      ctx.font = `${note}px ${MONO}`;
+      ctx.fillText(`rocket frame · β = ${beta.toFixed(3)} c`, rocketX, rocBot + note * 1.4);
       ctx.fillStyle = 'rgba(230, 180, 130, 0.65)';
-      ctx.fillText(`γ = ${gamma.toFixed(4)} · one tick takes ${gamma.toFixed(3)} s of lab time`, rocketX, botY + R * 0.065);
+      ctx.fillText(`γ = ${gamma.toFixed(4)} · one tick takes ${gamma.toFixed(3)} s of lab time`, rocketX, rocBot + note * 2.8);
 
       // ---- Minkowski diagram ----------------------------------------------
-      const mcx = W * 0.5, mcy = H * 0.8, msz = R * 0.17;
+      const msz = narrow ? Math.min(W * 0.2, H * 0.085) : R * 0.17;
+      const mcx = narrow ? W * 0.76 : W * 0.5;
+      const mcy = narrow ? H * 0.72 : H * 0.8;
       ctx.save();
       ctx.translate(mcx, mcy);
       ctx.strokeStyle = 'rgba(120, 165, 225, 0.3)';
@@ -183,7 +189,7 @@ export function create(host) {
       ctx.fillText('ct', msz * 0.06, -msz * 0.92);
       ctx.fillText('x', msz * 0.9, msz * 0.06);
       ctx.textAlign = 'center';
-      ctx.fillText('τ = 1 s hyperbola · c²t² − x² = c²τ²', 0, msz * 0.78);
+      ctx.fillText(narrow ? 'c²t² − x² = c²τ²' : 'τ = 1 s hyperbola · c²t² − x² = c²τ²', 0, msz * 0.85);
       ctx.restore();
 
       // ---- tick ledger for the current minute ------------------------------
@@ -197,10 +203,13 @@ export function create(host) {
         const b = clamp(0.06 + (t.m + s / 60) / 60 * 0.93, 0, 0.995);
         tau += Math.sqrt(1 - b * b) * (elapsed / steps);
       }
-      const ledX = W * 0.72, ledY = H * 0.58, ledW = W * 0.22, cell = ledW / 30;
+      const ledW = narrow ? W * 0.44 : W * 0.22;
+      const ledX = narrow ? W * 0.06 : W * 0.72;
+      const ledY = narrow ? H * 0.64 : H * 0.58;
+      const cell = ledW / 30;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
-      ctx.font = `${Math.max(10, R * 0.018)}px ${MONO}`;
+      ctx.font = `${Math.max(9, Math.min(R * 0.018, ledW / 19))}px ${MONO}`;
       ctx.fillStyle = 'rgba(170, 210, 255, 0.8)';
       ctx.fillText(`lab ticks this minute   ${elapsed.toFixed(2)}`, ledX, ledY - cell * 0.6);
       for (let i = 0; i < 60; i++) {
@@ -223,22 +232,24 @@ export function create(host) {
       const m = R * 0.045;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
-      ctx.font = `200 ${Math.min(R * 0.12, W * 0.18)}px ${SANS}`;
+      ctx.font = `200 ${Math.min(R * 0.12, W * 0.13)}px ${SANS}`;
       ctx.fillStyle = 'rgba(232, 242, 255, 0.96)';
       ctx.fillText(`${pad(t.h)}:${pad(t.m)}:${pad(t.s)}`, m, H - m - R * 0.075);
-      ctx.font = `${Math.max(11, R * 0.02)}px ${MONO}`;
+      ctx.font = `${note}px ${MONO}`;
       ctx.fillStyle = 'rgba(150, 190, 240, 0.7)';
       // A muon lives 2.2 µs by its own clock; at this β the lab sees γ times that.
       const muonKm = 299792.458 * beta * 2.2e-6 * gamma;
-      ctx.fillText(`a muon at this β lives ${(2.2 * gamma).toFixed(2)} µs and flies ${muonKm.toFixed(2)} km`, m, H - m - R * 0.038);
-      ctx.fillText(`mirror separation = 1 light-second = 299 792 458 m`, m, H - m - R * 0.008);
+      ctx.fillText(`a muon at this β lives ${(2.2 * gamma).toFixed(2)} µs and flies ${muonKm.toFixed(2)} km`, m, H - m - note * 1.9);
+      ctx.fillText('mirror separation = 1 light-second = 299 792 458 m', m, H - m - note * 0.4);
 
       ctx.textAlign = 'right';
       ctx.textBaseline = 'top';
       ctx.fillStyle = 'rgba(140, 175, 225, 0.6)';
-      ctx.fillText('Δt = γ Δτ,  γ = 1 / √(1 − β²)', W - m, m);
-      ctx.fillText('β is set by the minute: 0 at :00, 0.99 c at :59', W - m, m + R * 0.028);
-      ctx.fillText('both photons move at exactly c', W - m, m + R * 0.056);
+      ctx.fillText('Δt = γ Δτ,  γ = 1 / √(1 − β²)', W - m * 0.6, m * 0.4);
+      if (!narrow) {
+        ctx.fillText('β is set by the minute: 0 at :00, 0.99 c at :59', W - m * 0.6, m * 0.4 + note * 1.4);
+        ctx.fillText('both photons move at exactly c', W - m * 0.6, m * 0.4 + note * 2.8);
+      }
     },
   };
 }

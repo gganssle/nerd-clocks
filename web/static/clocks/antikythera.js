@@ -123,6 +123,7 @@ export function create(host) {
 
   // An Archimedean spiral dial (Metonic: 5 turns of 235 cells, Saros: 4 of 223).
   function spiralDial(cx, cy, R, turns, cells, turnsPerYear, year, label, sub) {
+    if (!(R > 4)) return;
     const inner = R * 0.3;
     ctx.save();
     ctx.translate(cx, cy);
@@ -371,7 +372,6 @@ export function create(host) {
       ctx.restore();
 
       // ---- back dials ------------------------------------------------------
-      const spiralR = Math.min(R * 0.13, (W - 2 * (cx + dialR * 1.25)) * 0.42 + R * 0.13);
       if (W > H * 1.25) {
         const sr = Math.min(R * 0.135, (W / 2 - dialR * 1.3) * 0.62);
         spiralDial(W * 0.5 - dialR * 1.28 - sr * 0.1 - sr, cy, sr, 5, 235, METONIC, year,
@@ -379,8 +379,10 @@ export function create(host) {
         spiralDial(W * 0.5 + dialR * 1.28 + sr * 0.1 + sr, cy, sr, 4, 223, SAROS, year,
           'ΣΑΡΟΣ · Saros', '223 months / 18.03 years');
       } else {
-        spiralDial(W * 0.2, H * 0.86, spiralR * 0.7, 5, 235, METONIC, year, 'Metonic', '235 / 19');
-        spiralDial(W * 0.8, H * 0.86, spiralR * 0.7, 4, 223, SAROS, year, 'Saros', '223 / 18.03');
+        // Stacked layout: the side dials drop below the movement.
+        const sr = Math.min(W * 0.15, H * 0.085);
+        spiralDial(W * 0.19, H * 0.83, sr, 5, 235, METONIC, year, 'Metonic', '235 / 19');
+        spiralDial(W * 0.81, H * 0.83, sr, 4, 223, SAROS, year, 'Saros', '223 / 18.03');
       }
 
       // ---- readout ---------------------------------------------------------
